@@ -19,8 +19,8 @@ export default function Ranking({
 }) {
   const medalhas = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
 
-  const ranking = cartelas
-    .map((c) => {
+  const ranking = Object.values(
+    cartelas.reduce((acc, c) => {
       let pts = 0;
       let total = 0;
       let acertos = 0;
@@ -40,13 +40,17 @@ export default function Ranking({
         pts += pontosCampeaoPorFase(c.campeao_fase || "grupos");
       }
       pts += Number(config?.bonus_geral) || 0;
-      return { ...c, pts, total, acertos, placaresExatos, diferencasCertas };
-    })
-    .sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      if (b.placaresExatos !== a.placaresExatos) return b.placaresExatos - a.placaresExatos;
-      return b.diferencasCertas - a.diferencasCertas;
-    });
+      const existente = acc[c.participante];
+      if (!existente || pts > existente.pts) {
+        acc[c.participante] = { ...c, pts, total, acertos, placaresExatos, diferencasCertas };
+      }
+      return acc;
+    }, {})
+  ).sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.placaresExatos !== a.placaresExatos) return b.placaresExatos - a.placaresExatos;
+    return b.diferencasCertas - a.diferencasCertas;
+  });
 
   const primeiro = ranking[0] || null;
   const segundo = ranking[1] || null;
@@ -101,13 +105,13 @@ export default function Ranking({
           {"\uD83C\uDFC5"} Ranking do Bolão
         </div>
         <div style={{ color: "rgba(0,0,0,0.6)", fontSize: 13 }}>
-          {cartelas.length} cartelas
+          {new Set(cartelas.map((c) => c.participante)).size} participantes, {cartelas.length} cartelas
         </div>
       </div>
 
       <div style={{ padding: "14px 16px 0" }}>
         <PainelFinanceiro
-          totalParticipantes={cartelas.length}
+          totalParticipantes={new Set(cartelas.map((c) => c.participante)).size}
           valorAposta={config?.valor_aposta || 20}
         />
 
