@@ -3,7 +3,7 @@ import { Card } from "./Card";
 import { Btn } from "./Btn";
 import { StatusBadge } from "./StatusBadge";
 import { JOGOS_TODOS, JOGOS_GRUPOS, TODOS_TIMES } from "../services/jogos";
-import { salvarAdminData, salvarConfig } from "../services/admin";
+import { salvarAdminData, salvarConfig, getConfig } from "../services/admin";
 import { listJogadores, deletarJogador } from "../services/jogadores";
 import { useAuth } from "../contexts/AuthContext";
 import { parseResultadosDeAPI, fetchResultadosDeURL } from "../utils/parseResultadosAPI";
