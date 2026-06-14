@@ -1,0 +1,254 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { JOGOS_TODOS, ISO } from "../services/jogos";
+
+function Flag({ time, size = 18 }) {
+  const code = ISO[time];
+  if (!code) return null;
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
+      alt={time}
+      width={Math.round(size * 1.5)}
+      height={size}
+      style={{ objectFit: "cover", borderRadius: 2, flexShrink: 0 }}
+      onError={(e) => { e.target.style.display = "none"; }}
+    />
+  );
+}
+
+function parseDateBRT(jogo) {
+  try {
+    const m = jogo.horario_brasilia.match(/(\d+)\/(\d+)\s+(\d+):(\d+)/);
+    if (!m) return null;
+    return new Date(`${jogo.data_iso}T${m[3]}:${m[4]}:00-03:00`);
+  } catch {
+    return null;
+  }
+}
+
+function formatarContagem(ms) {
+  if (ms <= 0) return null;
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}min`;
+  if (m > 0) return `${m}min ${s.toString().padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+export function JogosDoDia({ resultados }) {
+  const [agora, setAgora] = useState(new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setAgora(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { jogosHoje, proximoJogo } = useMemo(() => {
+    const hoje = agora.toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit", month: "2-digit", year: "numeric",
+    });
+
+    const diaHoje = hoje.split("/")[0];
+    const mesHoje = hoje.split("/")[1];
+
+    const jogosH = JOGOS_TODOS.filter(j => {
+      const m = j.horario_brasilia.match(/^(\d+)\/(\d+)/);
+      if (!m) return false;
+      if (j.time_a.includes("º") || j.time_a.includes("Venc")) return false;
+      return m[1] === diaHoje && m[2] === mesHoje;
+    }).sort((a, b) => {
+      const ta = parseDateBRT(a), tb = parseDateBRT(b);
+      return (ta?.getTime() || 0) - (tb?.getTime() || 0);
+    });
+
+    const prox = jogosH.find(j => {
+      const dt = parseDateBRT(j);
+      return dt && agora < dt;
+    }) || null;
+
+    return { jogosHoje: jogosH, proximoJogo: prox };
+  }, [agora]);
+
+  if (jogosHoje.length === 0) return null;
+
+  const proximoMs = proximoJogo ? parseDateBRT(proximoJogo) - agora : 0;
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: 10,
+      }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 7,
+        }}>
+          <span style={{ fontSize: 16 }}>📅</span>
+          <span style={{
+            color: "#FFD700", fontWeight: 800, fontSize: 13, letterSpacing: 1,
+          }}>JOGOS DE HOJE</span>
+        </div>
+        {proximoJogo && proximoMs > 0 && (
+          <div style={{
+            background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.3)",
+            borderRadius: 999, padding: "3px 10px",
+            fontSize: 10, fontWeight: 700, color: "#FFD700",
+          }}>
+            ⏱ {formatarContagem(proximoMs)}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {jogosHoje.map(j => {
+          const res = resultados?.[j.id];
+          const ok = res?.placar_a !== null && res?.placar_a !== undefined;
+          const dt = parseDateBRT(j);
+          const emAndamento = dt && agora >= dt && !ok;
+          const ehProximo = proximoJogo?.id === j.id;
+
+          return (
+            <div key={j.id} style={{
+              background: ehProximo
+                ? "linear-gradient(135deg, #0d2a5e, #0a1628)"
+                : "#111827",
+              border: `1px solid ${
+                emAndamento ? "#C8102E44"
+                : ehProximo ? "#FFD70044"
+                : "#1E2A45"
+              }`,
+              borderRadius: 12, padding: "10px 12px",
+              position: "relative", overflow: "hidden",
+            }}>
+              <div style={{
+                position: "absolute", top: 8, right: 10,
+                fontSize: 9, fontWeight: 700, letterSpacing: 0.5,
+                padding: "2px 8px", borderRadius: 999,
+                background: ok
+                  ? "rgba(22,163,74,0.2)"
+                  : emAndamento
+                  ? "rgba(200,16,46,0.2)"
+                  : ehProximo
+                  ? "rgba(255,215,0,0.15)"
+                  : "transparent",
+                color: ok
+                  ? "#4ade80"
+                  : emAndamento
+                  ? "#f87171"
+                  : ehProximo
+                  ? "#FFD700"
+                  : "transparent",
+                border: ok
+                  ? "1px solid rgba(22,163,74,0.3)"
+                  : emAndamento
+                  ? "1px solid rgba(200,16,46,0.3)"
+                  : ehProximo
+                  ? "1px solid rgba(255,215,0,0.3)"
+                  : "none",
+              }}>
+                {ok ? "✓ Encerrado"
+                  : emAndamento ? "● Ao vivo"
+                  : ehProximo ? "Próximo"
+                  : ""}
+              </div>
+
+              <div style={{
+                fontSize: 9, color: "#8B9CC8", fontWeight: 700,
+                letterSpacing: 0.5, marginBottom: 8,
+                display: "flex", gap: 8, alignItems: "center",
+              }}>
+                <span>{j.grupo}</span>
+                <span>·</span>
+                <span style={{ color: emAndamento ? "#f87171" : "#8B9CC8" }}>
+                  {j.horario_brasilia.split(" ")[1]} BRT
+                </span>
+                <span>·</span>
+                <span style={{
+                  overflow: "hidden", textOverflow: "ellipsis",
+                  whiteSpace: "nowrap", maxWidth: 120,
+                }}>{j.estadio}</span>
+              </div>
+
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto 1fr",
+                alignItems: "center", gap: 8,
+              }}>
+                <div style={{
+                  display: "flex", alignItems: "center",
+                  gap: 7, justifyContent: "flex-end",
+                }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: 700,
+                    color: ok && Number(res.placar_a) > Number(res.placar_b)
+                      ? "#FFD700" : "#F0F4FF",
+                    textAlign: "right",
+                  }}>{j.time_a}</span>
+                  <Flag time={j.time_a} size={20} />
+                </div>
+
+                <div style={{ textAlign: "center", minWidth: 72 }}>
+                  {ok ? (
+                    <div style={{
+                      display: "flex", alignItems: "center",
+                      justifyContent: "center", gap: 4,
+                    }}>
+                      <span style={{
+                        background: "#0A0E1A", border: "1px solid #FFD70044",
+                        borderRadius: 6, width: 28, height: 28,
+                        display: "inline-flex", alignItems: "center",
+                        justifyContent: "center", fontWeight: 900,
+                        fontSize: 15, color: "#FFD700",
+                      }}>{res.placar_a}</span>
+                      <span style={{ color: "#4B5563", fontSize: 10 }}>×</span>
+                      <span style={{
+                        background: "#0A0E1A", border: "1px solid #FFD70044",
+                        borderRadius: 6, width: 28, height: 28,
+                        display: "inline-flex", alignItems: "center",
+                        justifyContent: "center", fontWeight: 900,
+                        fontSize: 15, color: "#FFD700",
+                      }}>{res.placar_b}</span>
+                    </div>
+                  ) : (
+                    <div style={{
+                      display: "flex", alignItems: "center",
+                      justifyContent: "center", gap: 3,
+                    }}>
+                      <span style={{
+                        background: "#0A0E1A", border: "1px solid #1E2A45",
+                        borderRadius: 6, width: 28, height: 28,
+                        display: "inline-flex", alignItems: "center",
+                        justifyContent: "center", fontWeight: 900,
+                        fontSize: 15, color: "#1E2A45",
+                      }}>·</span>
+                      <span style={{ color: "#1E2A45", fontSize: 10 }}>×</span>
+                      <span style={{
+                        background: "#0A0E1A", border: "1px solid #1E2A45",
+                        borderRadius: 6, width: 28, height: 28,
+                        display: "inline-flex", alignItems: "center",
+                        justifyContent: "center", fontWeight: 900,
+                        fontSize: 15, color: "#1E2A45",
+                      }}>·</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 7,
+                }}>
+                  <Flag time={j.time_b} size={20} />
+                  <span style={{
+                    fontSize: 13, fontWeight: 700,
+                    color: ok && Number(res.placar_b) > Number(res.placar_a)
+                      ? "#FFD700" : "#F0F4FF",
+                  }}>{j.time_b}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

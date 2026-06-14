@@ -7,6 +7,7 @@ import { calcularPontosCartela } from "../utils/pontuacao";
 import { JOGOS_TODOS } from "../services/jogos";
 import { useAuth } from "../contexts/AuthContext";
 import { NOMES_IA } from "../services/ia";
+import { JogosDoDia } from "../components/JogosDoDia";
 
 function ConfirmModal({ title, message, onConfirm, onCancel }) {
   return (
@@ -144,6 +145,8 @@ export default function MinhasCartelas({
           totalParticipantes={cartelas.filter((c) => !NOMES_IA.includes(c.participante)).length}
           valorAposta={valorAposta}
         />
+
+        <JogosDoDia resultados={resultados} />
 
         <div
           style={{

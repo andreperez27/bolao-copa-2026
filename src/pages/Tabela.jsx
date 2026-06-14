@@ -1,351 +1,578 @@
-import React, { useMemo, useRef } from "react";
-import { JOGOS_GRUPOS, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL, ISO } from "../services/jogos";
+import React, { useMemo, useRef, useState } from "react";
+import {
+  JOGOS_GRUPOS, JOGOS_OITAVAS, JOGOS_QUARTAS,
+  JOGOS_SEMI, JOGOS_FINAL, ISO,
+} from "../services/jogos";
 
-const GRUPOS = Array.from({ length: 12 }, (_, i) => "Grupo " + String.fromCharCode(65 + i));
+const LETRAS_GRUPOS = Array.from({ length: 12 }, (_, i) =>
+  "Grupo " + String.fromCharCode(65 + i)
+);
 
-function Flag({ time, w = 20 }) {
-  const iso = ISO[time];
-  if (!iso) return null;
+function Flag({ time, size = 18 }) {
+  const code = ISO[time];
+  if (!code) return <span style={{ fontSize: size * 0.7, lineHeight: 1 }}>🏳</span>;
   return (
     <img
-      src={`https://flagcdn.com/w40/${iso}.png`}
+      src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
       alt={time}
-      style={{ width: w, height: (w * 14) / 20, borderRadius: 2, marginRight: 6, verticalAlign: "middle", flexShrink: 0 }}
+      title={time}
+      width={Math.round(size * 1.5)}
+      height={size}
+      style={{ objectFit: "cover", borderRadius: 2, flexShrink: 0, display: "block" }}
       onError={(e) => { e.target.style.display = "none"; }}
     />
   );
 }
 
-function calcularClassificacao(jogos, resultados) {
-  const stats = {};
-  jogos.forEach((j) => {
+function calcularClassificacao(times, jogos, resultados) {
+  const stats = Object.fromEntries(
+    times.map(t => [t, { time: t, J: 0, V: 0, E: 0, D: 0, GP: 0, GC: 0, SG: 0, PTS: 0 }])
+  );
+  jogos.forEach(j => {
     const res = resultados?.[j.id];
-    if (res?.placar_a === undefined || res?.placar_b === undefined) return;
-    const ga = Number(res.placar_a);
-    const gb = Number(res.placar_b);
-    [j.time_a, j.time_b].forEach((t) => {
-      if (!stats[t]) stats[t] = { V: 0, E: 0, D: 0, GP: 0, GC: 0, PTS: 0 };
-    });
-    stats[j.time_a].GP += ga; stats[j.time_a].GC += gb;
-    stats[j.time_b].GP += gb; stats[j.time_b].GC += ga;
-    if (ga > gb) { stats[j.time_a].V++; stats[j.time_a].PTS += 3; stats[j.time_b].D++; }
-    else if (gb > ga) { stats[j.time_b].V++; stats[j.time_b].PTS += 3; stats[j.time_a].D++; }
-    else { stats[j.time_a].E++; stats[j.time_b].E++; stats[j.time_a].PTS++; stats[j.time_b].PTS++; }
+    if (res?.placar_a === null || res?.placar_a === undefined) return;
+    const ga = Number(res.placar_a), gb = Number(res.placar_b);
+    const a = stats[j.time_a], b = stats[j.time_b];
+    if (!a || !b) return;
+    a.J++; b.J++;
+    a.GP += ga; a.GC += gb; a.SG += ga - gb;
+    b.GP += gb; b.GC += ga; b.SG += gb - ga;
+    if      (ga > gb) { a.V++; a.PTS += 3; b.D++; }
+    else if (ga < gb) { b.V++; b.PTS += 3; a.D++; }
+    else              { a.E++; a.PTS++;    b.E++; b.PTS++; }
   });
-  return Object.entries(stats)
-    .map(([time, s]) => ({ time, ...s, SG: s.GP - s.GC }))
-    .sort((a, b) => b.PTS - a.PTS || b.SG - a.SG || b.GP - a.GP);
+  return Object.values(stats).sort((a, b) =>
+    b.PTS - a.PTS || b.SG - a.SG || b.GP - a.GP ||
+    a.time.localeCompare(b.time, "pt-BR")
+  );
 }
 
-function resolverAvancos(estatisticasMap) {
-  const adv = {};
-  GRUPOS.forEach((g, i) => {
-    const letra = String.fromCharCode(65 + i);
-    const t = estatisticasMap.get(g);
-    if (t && t.length >= 2) {
-      adv[`1${letra}`] = t[0].time;
-      adv[`2${letra}`] = t[1].time;
-    }
-  });
-  return adv;
-}
+const GRUPOS_MAP = {};
+LETRAS_GRUPOS.forEach(g => { GRUPOS_MAP[g] = { times: [], jogos: [] }; });
+JOGOS_GRUPOS.forEach(j => {
+  const g = GRUPOS_MAP[j.grupo];
+  if (!g) return;
+  if (!g.times.includes(j.time_a)) g.times.push(j.time_a);
+  if (!g.times.includes(j.time_b)) g.times.push(j.time_b);
+  g.jogos.push(j);
+});
 
-function resolverOitavas(oitavas, avancos, resultados) {
-  const map = {};
-  oitavas.forEach((j) => {
-    const ta = avancos[j.time_a] || j.time_a;
-    const tb = avancos[j.time_b] || j.time_b;
-    const res = resultados?.[j.id];
-    map[j.id] = { ...j, time_a: ta, time_b: tb, res };
-    if (res?.placar_a !== undefined && res?.placar_b !== undefined) {
-      const ga = Number(res.placar_a), gb = Number(res.placar_b);
-      if (ga !== gb) map[`V ${j.id.replace("oit", "Oit")}`] = ga > gb ? ta : tb;
-    }
-  });
-  return map;
-}
+function GrupoCard({ nome, times, jogos, resultados }) {
+  const letra   = nome.replace("Grupo ", "");
+  const classif = useMemo(
+    () => calcularClassificacao(times, jogos, resultados),
+    [times, jogos, resultados]
+  );
 
-function resolverQuartas(quartas, oitavasResolvidas, resultados) {
-  const map = {};
-  quartas.forEach((j) => {
-    const ta = oitavasResolvidas[j.time_a] || j.time_a;
-    const tb = oitavasResolvidas[j.time_b] || j.time_b;
-    const res = resultados?.[j.id];
-    map[j.id] = { ...j, time_a: ta, time_b: tb, res };
-    if (res?.placar_a !== undefined && res?.placar_b !== undefined) {
-      const ga = Number(res.placar_a), gb = Number(res.placar_b);
-      if (ga !== gb) map[`V ${j.id.replace("qua", "Qua")}`] = ga > gb ? ta : tb;
-    }
-  });
-  return map;
-}
-
-function resolverSemifinal(semis, quartasResolvidas, resultados) {
-  const map = {};
-  semis.forEach((j) => {
-    const ta = quartasResolvidas[j.time_a] || j.time_a;
-    const tb = quartasResolvidas[j.time_b] || j.time_b;
-    const res = resultados?.[j.id];
-    map[j.id] = { ...j, time_a: ta, time_b: tb, res };
-    if (res?.placar_a !== undefined && res?.placar_b !== undefined) {
-      const ga = Number(res.placar_a), gb = Number(res.placar_b);
-      if (ga !== gb) map[`V ${j.id.replace("sem", "Sem")}`] = ga > gb ? ta : tb;
-    }
-  });
-  return map;
-}
-
-function resolverFinal(finais, semisResolvidas, resultados) {
-  const map = {};
-  finais.forEach((j) => {
-    const ta = semisResolvidas[j.time_a] || j.time_a;
-    const tb = semisResolvidas[j.time_b] || j.time_b;
-    const res = resultados?.[j.id];
-    map[j.id] = { ...j, time_a: ta, time_b: tb, res };
-  });
-  return map;
-}
-
-function PlacarDisplay({ res }) {
-  if (!res?.placar_a === undefined || res?.placar_b === undefined) return <span style={{ color: "#555", fontSize: 11 }}>—</span>;
-  const ga = Number(res.placar_a), gb = Number(res.placar_b);
-  return <span style={{ fontWeight: 700, color: "#FFD700" }}>{ga}×{gb}</span>;
-}
-
-function GrupoTabela({ letra, classificacao, jogos, resultados }) {
   return (
-    <div style={{ background: "#111827", border: "1px solid #1E2A45", borderRadius: 12, overflow: "hidden" }}>
+    <div style={{
+      background: "#111827", border: "1px solid #1E2A45",
+      borderRadius: 14, overflow: "hidden",
+    }}>
       <div style={{
-        background: "linear-gradient(90deg, #0033A0, #001a66)", padding: "10px 14px",
-        display: "flex", alignItems: "center", gap: 8, borderBottom: "2px solid #FFD700"
+        background: "linear-gradient(135deg, #0a1628 0%, #0d2a5e 70%, #0a1628 100%)",
+        padding: "10px 12px 10px",
+        borderBottom: "2px solid rgba(255,215,0,0.2)",
       }}>
-        <Flag time={classificacao[0]?.time} w={22} />
-        <span style={{ color: "#FFD700", fontWeight: 800, fontSize: 14, letterSpacing: 1, flex: 1 }}>
-          {letra}
-        </span>
-        {classificacao.length === 4 && (
-          <span style={{ color: "#8B9CC8", fontSize: 10 }}>
-            {classificacao[0]?.time?.slice(0, 10)}{classificacao[0]?.time?.length > 10 ? "…" : ""} / {classificacao[1]?.time?.slice(0, 10)}{classificacao[1]?.time?.length > 10 ? "…" : ""}
-          </span>
-        )}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          marginBottom: 10,
+        }}>
+          <div style={{
+            width: 3, height: 14, background: "#FFD700",
+            borderRadius: 2, flexShrink: 0,
+          }}/>
+          <span style={{
+            color: "#FFD700", fontWeight: 900, fontSize: 12,
+            letterSpacing: 2, textTransform: "uppercase",
+          }}>GRUPO {letra}</span>
+        </div>
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6,
+        }}>
+          {times.map((t, i) => (
+            <div key={t} style={{
+              display: "flex", alignItems: "center", gap: 7,
+              background: i < 2
+                ? "rgba(22,163,74,0.15)"
+                : "rgba(255,255,255,0.04)",
+              border: i < 2
+                ? "1px solid rgba(22,163,74,0.3)"
+                : "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 8, padding: "5px 8px",
+              minWidth: 0,
+            }}>
+              <Flag time={t} size={20} />
+              {i < 2 && (
+                <span style={{
+                  fontSize: 8, background: "#16a34a", color: "#fff",
+                  borderRadius: 3, padding: "1px 4px", fontWeight: 700,
+                  flexShrink: 0, lineHeight: 1.6,
+                }}>✓</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{
+          fontSize: 9, color: "#4B5563", marginTop: 6,
+          display: "flex", alignItems: "center", gap: 4,
+        }}>
+          <span style={{
+            display: "inline-block", width: 8, height: 8,
+            background: "#16a34a", borderRadius: 2,
+          }}/>
+          Classificado para as oitavas
+        </div>
       </div>
 
-      {classificacao.length > 0 && (
-        <div style={{ padding: "8px 10px", borderBottom: "1px solid #1E2A4520" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-            <thead>
-              <tr style={{ color: "#8B9CC8", fontSize: 9, textTransform: "uppercase" }}>
-                <th style={{ textAlign: "left", padding: "2px 4px", fontWeight: 600 }}>#</th>
-                <th style={{ textAlign: "left", padding: "2px 4px", fontWeight: 600 }}>Time</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>P</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>V</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>E</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>D</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>GP</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>GC</th>
-                <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: 600 }}>SG</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classificacao.map((t, i) => (
-                <tr key={t.time} style={{
-                  color: i < 2 ? "#F0F4FF" : "#8B9CC8",
-                  fontWeight: i < 2 ? 700 : 400,
-                  background: i < 2 ? "rgba(0,51,160,0.08)" : "transparent"
-                }}>
-                  <td style={{ padding: "3px 4px" }}>{i + 1}</td>
-                  <td style={{ padding: "3px 4px", display: "flex", alignItems: "center", gap: 4 }}>
-                    <Flag time={t.time} w={14} />
-                    <span>{t.time}</span>
-                  </td>
-                  <td style={{ textAlign: "center", padding: "3px 4px", fontWeight: 800, color: "#FFD700" }}>{t.PTS}</td>
-                  <td style={{ textAlign: "center", padding: "3px 4px" }}>{t.V}</td>
-                  <td style={{ textAlign: "center", padding: "3px 4px" }}>{t.E}</td>
-                  <td style={{ textAlign: "center", padding: "3px 4px" }}>{t.D}</td>
-                  <td style={{ textAlign: "center", padding: "3px 4px" }}>{t.GP}</td>
-                  <td style={{ textAlign: "center", padding: "3px 4px" }}>{t.GC}</td>
-                  <td style={{ textAlign: "center", padding: "3px 4px", fontWeight: 600 }}>{t.SG > 0 ? "+" : ""}{t.SG}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div style={{ padding: "6px 10px" }}>
-        {jogos.map((j) => {
-          const r = resultados?.[j.id];
+      <div style={{ borderBottom: "1px solid #1E2A45" }}>
+        {jogos.map(j => {
+          const res = resultados?.[j.id];
+          const ok  = res?.placar_a !== null && res?.placar_a !== undefined;
           return (
             <div key={j.id} style={{
-              display: "flex", alignItems: "center", gap: 4, padding: "4px 0",
-              borderBottom: "1px solid #1E2A4510", fontSize: 12
+              display: "grid",
+              gridTemplateColumns: "1fr 58px 1fr",
+              alignItems: "center",
+              padding: "5px 10px",
+              borderBottom: "1px solid rgba(30,42,69,0.35)",
+              gap: 4,
             }}>
-              <span style={{ color: "#8B9CC8", fontSize: 9, minWidth: 24, textAlign: "right", flexShrink: 0 }}>{j.horario_brasilia}</span>
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 3, overflow: "hidden" }}>
-                <Flag time={j.time_a} w={13} />
-                <span style={{ color: "#F0F4FF", fontWeight: 500, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{j.time_a}</span>
+              <div style={{
+                display: "flex", alignItems: "center",
+                gap: 5, justifyContent: "flex-end", minWidth: 0,
+              }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, color: "#F0F4FF",
+                  textAlign: "right", overflow: "hidden",
+                  textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{j.time_a}</span>
+                <Flag time={j.time_a} size={13} />
               </div>
-              <div style={{ minWidth: 40, textAlign: "center", flexShrink: 0 }}>
-                <PlacarDisplay res={r} />
+
+              <div style={{ textAlign: "center" }}>
+                {ok ? (
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    justifyContent: "center", gap: 2,
+                  }}>
+                    <span style={{
+                      background: "#0A0E1A", border: "1px solid #1E2A45",
+                      borderRadius: 4, width: 22, height: 22,
+                      display: "inline-flex", alignItems: "center",
+                      justifyContent: "center", fontWeight: 900,
+                      fontSize: 12, color: "#FFD700",
+                    }}>{res.placar_a}</span>
+                    <span style={{ color: "#4B5563", fontSize: 9 }}>×</span>
+                    <span style={{
+                      background: "#0A0E1A", border: "1px solid #1E2A45",
+                      borderRadius: 4, width: 22, height: 22,
+                      display: "inline-flex", alignItems: "center",
+                      justifyContent: "center", fontWeight: 900,
+                      fontSize: 12, color: "#FFD700",
+                    }}>{res.placar_b}</span>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{
+                      fontSize: 8, color: "#4B5563", fontWeight: 700,
+                      letterSpacing: 0.3, lineHeight: 1.4,
+                    }}>{j.horario_brasilia.split(" ")[0]}</div>
+                    <div style={{
+                      fontSize: 11, color: "#8B9CC8", fontWeight: 800,
+                    }}>{j.horario_brasilia.split(" ")[1]}</div>
+                  </div>
+                )}
               </div>
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 3, justifyContent: "flex-end", overflow: "hidden" }}>
-                <span style={{ color: "#F0F4FF", fontWeight: 500, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{j.time_b}</span>
-                <Flag time={j.time_b} w={13} />
+
+              <div style={{
+                display: "flex", alignItems: "center",
+                gap: 5, minWidth: 0,
+              }}>
+                <Flag time={j.time_b} size={13} />
+                <span style={{
+                  fontSize: 10, fontWeight: 600, color: "#F0F4FF",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{j.time_b}</span>
               </div>
             </div>
           );
         })}
       </div>
+
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+        <thead>
+          <tr style={{ background: "rgba(0,51,160,0.15)" }}>
+            <th colSpan={2} style={{
+              padding: "4px 4px 4px 8px", textAlign: "left",
+              color: "#4B5563", fontSize: 8, fontWeight: 700, letterSpacing: 1,
+            }}>CLASSIFICAÇÃO</th>
+            {["J","V","E","D","GP","GC","SG"].map(h => (
+              <th key={h} style={{
+                padding: "4px 3px", textAlign: "center",
+                color: "#4B5563", fontSize: 8, fontWeight: 700,
+              }}>{h}</th>
+            ))}
+            <th style={{
+              padding: "4px 5px 4px 3px", textAlign: "center",
+              color: "#FFD700", fontSize: 8, fontWeight: 700,
+            }}>PTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {classif.map((r, i) => (
+            <tr key={r.time} style={{
+              borderBottom: "1px solid rgba(30,42,69,0.25)",
+              background: i < 2 ? "rgba(22,163,74,0.04)" : "transparent",
+            }}>
+              <td style={{
+                padding: "5px 3px 5px 0",
+                borderLeft: `3px solid ${i < 2 ? "#16a34a" : "transparent"}`,
+                width: 18, textAlign: "center",
+                color: i < 2 ? "#22c55e" : "#4B5563",
+                fontWeight: 900, fontSize: 9,
+              }}>{i + 1}</td>
+              <td style={{ padding: "5px 4px" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                }}>
+                  <Flag time={r.time} size={13} />
+                  <span style={{
+                    fontSize: 10, fontWeight: 600,
+                    color: i < 2 ? "#F0F4FF" : "#8B9CC8",
+                    overflow: "hidden", textOverflow: "ellipsis",
+                    whiteSpace: "nowrap", maxWidth: 90,
+                    display: "block",
+                  }}>{r.time}</span>
+                </div>
+              </td>
+              {[r.J, r.V, r.E, r.D, r.GP, r.GC, r.SG].map((v, ci) => (
+                <td key={ci} style={{
+                  padding: "5px 3px", textAlign: "center",
+                  color: "#8B9CC8", fontWeight: 600, fontSize: 10,
+                }}>
+                  {ci === 6 && v > 0 ? `+${v}` : v}
+                </td>
+              ))}
+              <td style={{
+                padding: "5px 5px 5px 3px", textAlign: "center",
+                fontWeight: 900, fontSize: 13, color: "#FFD700",
+              }}>{r.PTS}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function KOCard({ jogo, campeao }) {
-  const isFinal = jogo.id === "fin-1";
-  const vencedor = (jogo.res?.placar_a !== undefined && jogo.res?.placar_b !== undefined)
-    ? (Number(jogo.res.placar_a) > Number(jogo.res.placar_b) ? jogo.time_a
-      : Number(jogo.res.placar_b) > Number(jogo.res.placar_a) ? jogo.time_b : null)
+function KoJogo({ jogo, resultados, isFinal }) {
+  const res = resultados?.[jogo.id];
+  const ok  = res?.placar_a !== null && res?.placar_a !== undefined;
+  const isHolder = n => !n || /^[12]º/.test(n) || /^[VM]/.test(n) ||
+    ["Venc","Sem","Qua","Oit","3º"].some(p => n.includes(p));
+
+  const lados = [
+    { nome: jogo.time_a, gol: ok ? res.placar_a : null },
+    { nome: jogo.time_b, gol: ok ? res.placar_b : null },
+  ];
+  const vencedor = ok && Number(res.placar_a) !== Number(res.placar_b)
+    ? (Number(res.placar_a) > Number(res.placar_b) ? jogo.time_a : jogo.time_b)
     : null;
+
   return (
     <div style={{
-      background: isFinal ? "linear-gradient(135deg, #B8860B, #FFD700)" : "#111827",
-      border: isFinal ? "2px solid #FFD700" : "1px solid #1E2A45",
-      borderRadius: 10, padding: "8px 10px", textAlign: "center",
-      boxShadow: isFinal ? "0 0 20px rgba(255,215,0,0.2)" : "none",
+      background: "#111827",
+      border: `1px solid ${isFinal ? "#FFD700" : "#1E2A45"}`,
+      borderRadius: 10, overflow: "hidden",
+      boxShadow: isFinal ? "0 0 20px rgba(255,215,0,0.12)" : "none",
     }}>
-      <div style={{ color: isFinal ? "#000" : "#C8102E", fontWeight: 800, fontSize: 10, marginBottom: 4, letterSpacing: 1 }}>
-        {jogo.grupo.toUpperCase()}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 4 }}>
-        <div style={{ flex: 1, textAlign: "right" }}>
-          <span style={{
-            color: vencedor === jogo.time_a ? (isFinal ? "#000" : "#FFD700") : (isFinal ? "#333" : "#8B9CC8"),
-            fontWeight: vencedor === jogo.time_a ? 800 : 500, fontSize: 12,
-          }}>{jogo.time_a}</span>
+      <div style={{
+        padding: "3px 8px", fontSize: 9, textAlign: "center", fontWeight: 700,
+        letterSpacing: 0.5,
+        background: isFinal ? "rgba(255,215,0,0.12)" : "rgba(0,51,160,0.2)",
+        color: isFinal ? "#FFD700" : "#8B9CC8",
+      }}>{jogo.horario_brasilia}</div>
+
+      {lados.map((l, i) => (
+        <div key={i} style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between", padding: "5px 10px",
+          borderBottom: i === 0 ? "1px solid rgba(30,42,69,0.5)" : "none",
+          background: l.nome === vencedor ? "rgba(255,215,0,0.05)" : "transparent",
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            flex: 1, minWidth: 0,
+          }}>
+            {!isHolder(l.nome) && <Flag time={l.nome} size={14} />}
+            <span style={{
+              fontSize: 11, fontWeight: l.nome === vencedor ? 800 : 600,
+              color: l.nome === vencedor ? "#FFD700" : "#F0F4FF",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>{l.nome}</span>
+          </div>
+          <div style={{
+            background: "#0A0E1A", border: "1px solid #1E2A45",
+            borderRadius: 4, width: 22, height: 22, display: "flex",
+            alignItems: "center", justifyContent: "center",
+            flexShrink: 0, marginLeft: 8, fontWeight: 900, fontSize: 12,
+            color: l.gol !== null
+              ? (isFinal ? "#FFD700" : l.nome === vencedor ? "#22c55e" : "#F0F4FF")
+              : "#4B5563",
+          }}>
+            {l.gol !== null ? l.gol : "·"}
+          </div>
         </div>
-        <div style={{ minWidth: 36, textAlign: "center", padding: "2px 6px", background: isFinal ? "rgba(0,0,0,0.15)" : "#0d1b2a", borderRadius: 4 }}>
-          <PlacarDisplay res={jogo.res} />
-        </div>
-        <div style={{ flex: 1, textAlign: "left" }}>
-          <span style={{
-            color: vencedor === jogo.time_b ? (isFinal ? "#000" : "#FFD700") : (isFinal ? "#333" : "#8B9CC8"),
-            fontWeight: vencedor === jogo.time_b ? 800 : 500, fontSize: 12,
-          }}>{jogo.time_b}</span>
-        </div>
-      </div>
-      <div style={{ color: isFinal ? "#000" : "#8B9CC8", fontSize: 9 }}>{jogo.horario_brasilia}</div>
+      ))}
     </div>
   );
 }
 
-function BracketRound({ label, jogos, campeao }) {
-  return (
-    <div style={{ flex: 1, minWidth: 160 }}>
-      <div style={{ color: "#C8102E", fontWeight: 800, fontSize: 11, marginBottom: 8, textAlign: "center", letterSpacing: 1 }}>
-        {label}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {jogos.map((j) => <KOCard key={j.id} jogo={j} campeao={campeao} />)}
-      </div>
-    </div>
-  );
+function resolverTimes(jogos, resultados, avancos = {}) {
+  return jogos.map(j => {
+    const ta  = avancos[j.time_a] || j.time_a;
+    const tb  = avancos[j.time_b] || j.time_b;
+    const res = resultados?.[j.id];
+    return { ...j, time_a: ta, time_b: tb, res };
+  });
+}
+
+function vencedorDe(jogo) {
+  if (!jogo?.res) return null;
+  const ga = Number(jogo.res.placar_a), gb = Number(jogo.res.placar_b);
+  if (isNaN(ga) || isNaN(gb) || ga === gb) return null;
+  return ga > gb ? jogo.time_a : jogo.time_b;
+}
+
+function gerarHTMLDownload(innerHtml, campeoReal) {
+  const data = new Date().toLocaleDateString("pt-BR");
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Tabela Copa 2026 — Bolão ANPEREZ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0A0E1A;color:#F0F4FF;font-family:Arial,Helvetica,sans-serif;padding:16px;}
+img{display:inline-block;vertical-align:middle;}
+table{border-collapse:collapse;width:100%;}
+</style>
+</head>
+<body>
+<div style="text-align:center;padding:20px 0 24px;border-bottom:2px solid #FFD700;margin-bottom:20px;">
+  <div style="color:#FFD700;font-size:11px;font-weight:700;letter-spacing:3px;">COPA DO MUNDO 2026</div>
+  <div style="color:#F0F4FF;font-size:26px;font-weight:900;">Tabela Oficial</div>
+  <div style="color:#8B9CC8;font-size:11px;margin-top:6px;">
+    Bolão ANPEREZ · ${data}${campeoReal ? " · 🏆 " + campeoReal : ""}
+  </div>
+</div>
+${innerHtml}
+<div style="text-align:center;padding:24px;color:#4B5563;font-size:10px;margin-top:20px;">
+  Horários em BRT (Brasília) · Bolão ANPEREZ 2026
+</div>
+</body>
+</html>`;
 }
 
 export default function Tabela({ resultados, campeoReal, onVoltar }) {
-  const printRef = useRef(null);
+  const tabelaRef = useRef(null);
+  const gruposEntries = useMemo(() => Object.entries(GRUPOS_MAP), []);
 
-  const { classificacaoMap, avancos, oitavasResolved, quartasResolved, semisResolved, finalResolved } = useMemo(() => {
-    const map = new Map();
-    GRUPOS.forEach((g) => {
-      const jogos = JOGOS_GRUPOS.filter((j) => j.grupo === g);
-      map.set(g, calcularClassificacao(jogos, resultados));
+  const finalTerminou = useMemo(() => {
+    const fin = JOGOS_FINAL[0];
+    if (!fin) return false;
+    const r = resultados?.[fin.id];
+    return r?.placar_a !== null && r?.placar_a !== undefined;
+  }, [resultados]);
+
+  const { oitavas, quartas, semis, final: finalJogos } = useMemo(() => {
+    const avancos = {};
+    Object.entries(GRUPOS_MAP).forEach(([nome, g]) => {
+      const letra = nome.replace("Grupo ", "");
+      const cl = calcularClassificacao(g.times, g.jogos, resultados);
+      if (cl.length >= 2) {
+        avancos[`1${letra}`] = cl[0].time;
+        avancos[`2${letra}`] = cl[1].time;
+        if (cl[2]) avancos[`3${letra}`] = cl[2].time;
+      }
     });
-    const avanc = resolverAvancos(map);
-    const oRes = resolverOitavas(JOGOS_OITAVAS, avanc, resultados);
-    const qRes = resolverQuartas(JOGOS_QUARTAS, oRes, resultados);
-    const sRes = resolverSemifinal(JOGOS_SEMI, qRes, resultados);
-    const fRes = resolverFinal(JOGOS_FINAL, sRes, resultados);
-    return {
-      classificacaoMap: map,
-      avancos: avanc,
-      oitavasResolved: Object.values(oRes),
-      quartasResolved: Object.values(qRes),
-      semisResolved: Object.values(sRes),
-      finalResolved: Object.values(fRes),
-    };
+
+    const oit = resolverTimes(JOGOS_OITAVAS, resultados, avancos);
+    const avancos2 = {};
+    oit.forEach(j => {
+      const v = vencedorDe(j);
+      if (v) avancos2[`V ${j.id}`] = v;
+      const alias = j.id.replace("oit-","Oit").replace(/(\d+)/, n => n);
+      avancos2[`V Oit${j.id.replace("oit-","")}`] = v || j.time_a;
+    });
+
+    const qua = resolverTimes(JOGOS_QUARTAS, resultados, avancos2);
+    const avancos3 = {};
+    qua.forEach(j => {
+      const v = vencedorDe(j);
+      if (v) avancos3[`V Qua${j.id.replace("qua-","")}`] = v;
+    });
+
+    const sem = resolverTimes(JOGOS_SEMI, resultados, avancos3);
+    const avancos4 = {};
+    sem.forEach(j => {
+      const v = vencedorDe(j);
+      if (v) avancos4[`V Sem${j.id.replace("sem-","")}`] = v;
+    });
+
+    const fin = resolverTimes(JOGOS_FINAL, resultados, { ...avancos3, ...avancos4,
+      "V Sem1/2": avancos4["V Sem1"] || avancos4["V Sem2"] || "V Semi 1/2",
+      "V Sem3/4": avancos4["V Sem3"] || avancos4["V Sem4"] || "V Semi 3/4",
+    });
+
+    return { oitavas: oit, quartas: qua, semis: sem, final: fin };
   }, [resultados]);
 
   const handleDownload = () => {
-    const content = printRef.current;
-    if (!content) return;
-    const clone = content.cloneNode(true);
-    const styles = Array.from(document.styleSheets)
-      .map((s) => { try { return Array.from(s.cssRules || []).map((r) => r.cssText).join(""); } catch { return ""; } })
-      .filter(Boolean)
-      .join("");
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tabela da Copa 2026</title><style>${styles}</style></head><body style="background:#fff;padding:20px;font-family:Arial,sans-serif">${clone.innerHTML}</body></html>`;
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "tabela_copa_2026.html"; a.click();
+    const html = tabelaRef.current?.innerHTML || "";
+    const doc  = gerarHTMLDownload(html, campeoReal);
+    const blob = new Blob([doc], { type: "text/html" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `tabela-copa-2026${finalTerminou ? "-final" : ""}.html`;
+    a.click();
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div ref={printRef} className="scroll-suave" style={{ minHeight: "100vh", background: "#0A0E1A", paddingBottom: 60 }}>
+  const fases = [
+    { titulo: "OITAVAS DE FINAL", jogos: oitavas,    isFinal: false },
+    { titulo: "QUARTAS DE FINAL", jogos: quartas,    isFinal: false },
+    { titulo: "SEMIFINAIS",       jogos: semis,      isFinal: false },
+    { titulo: "\uD83C\uDFC6 GRANDE FINAL",  jogos: finalJogos, isFinal: true  },
+  ];
 
-      <div style={{ background: "linear-gradient(135deg, #0033A0, #001a66)", padding: "16px 20px 14px", borderBottom: "2px solid #FFD700" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-          <button onClick={onVoltar} style={{ background: "rgba(0,0,0,0.2)", color: "#fff", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            ← Voltar
-          </button>
-          <button onClick={handleDownload} style={{ background: "#FFD700", color: "#000", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 15 }}>⬇</span> Download HTML
-          </button>
-          <div style={{ flex: 1, textAlign: "right" }}>
-            <div style={{ color: "#FFD700", fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>COPA DO MUNDO 2026</div>
-            <div style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Tabela da Copa</div>
+  return (
+    <div style={{ minHeight: "100vh", background: "#0A0E1A", paddingBottom: 80 }}>
+
+      <div style={{
+        background: "linear-gradient(135deg, #0A1628, #0d2145, #0A1628)",
+        borderBottom: "3px solid #FFD700",
+        padding: "12px 16px",
+        position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          maxWidth: 960, margin: "0 auto",
+        }}>
+          <button onClick={onVoltar} style={{
+            background: "rgba(255,255,255,0.08)", border: "none",
+            borderRadius: 8, color: "#F0F4FF", padding: "7px 12px",
+            cursor: "pointer", fontWeight: 700, fontSize: 13, flexShrink: 0,
+          }}>← Voltar</button>
+
+          <div style={{ flex: 1 }}>
+            <div style={{
+              color: "#FFD700", fontSize: 9, fontWeight: 700, letterSpacing: 2,
+            }}>COPA DO MUNDO 2026</div>
+            <div style={{
+              color: "#F0F4FF", fontSize: 17, fontWeight: 900, lineHeight: 1.1,
+            }}>Tabela</div>
           </div>
+
+          <button onClick={handleDownload} style={{
+            display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+            background: finalTerminou
+              ? "linear-gradient(135deg, #B8860B, #FFD700)"
+              : "rgba(0,51,160,0.5)",
+            border: finalTerminou ? "none" : "1px solid #0033A0",
+            color: finalTerminou ? "#000" : "#F0F4FF",
+            fontWeight: 700, fontSize: 12, padding: "7px 14px",
+            borderRadius: 999, cursor: "pointer",
+            boxShadow: finalTerminou ? "0 0 16px rgba(255,215,0,0.3)" : "none",
+          }}>
+            {finalTerminou ? "\uD83C\uDFC6 Recordação" : "\uD83D\uDCE5 Baixar"}
+          </button>
         </div>
       </div>
 
-      <div style={{ padding: "14px 16px" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "16px 14px" }}>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
-          {GRUPOS.map((g) => {
-            const letra = g.replace("Grupo ", "");
-            const jogos = JOGOS_GRUPOS.filter((j) => j.grupo === g);
-            const classif = classificacaoMap.get(g) || [];
-            return <GrupoTabela key={g} letra={g} classificacao={classif} jogos={jogos} resultados={resultados} />;
-          })}
-        </div>
-
-        <div style={{ marginTop: 28 }}>
-          <div style={{ color: "#FFD700", fontWeight: 800, fontSize: 16, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 20 }}>🏆</span> Fases Eliminatórias
-          </div>
+        {campeoReal && finalTerminou && (
           <div style={{
-            display: "flex", gap: 12, overflowX: "auto", paddingBottom: 10,
-            justifyContent: "space-between", flexWrap: "nowrap"
+            background: "linear-gradient(135deg, #1a1200, #2a1f00)",
+            border: "2px solid #FFD700", borderRadius: 16, padding: "20px",
+            marginBottom: 20, textAlign: "center",
+            boxShadow: "0 0 40px rgba(255,215,0,0.15)",
           }}>
-            <BracketRound label="OITAVAS DE FINAL" jogos={oitavasResolved} campeao={campeoReal} />
-            <BracketRound label="QUARTAS DE FINAL" jogos={quartasResolved} campeao={campeoReal} />
-            <BracketRound label="SEMIFINAL" jogos={semisResolved} campeao={campeoReal} />
-            <BracketRound label="GRANDE FINAL" jogos={finalResolved} campeao={campeoReal} />
-          </div>
-        </div>
-
-        {campeoReal && (
-          <div style={{ marginTop: 24, background: "linear-gradient(135deg, #B8860B, #FFD700)", borderRadius: 14, padding: 24, textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 6 }}>🏆</div>
-            <div style={{ color: "#000", fontSize: 14, fontWeight: 800, marginBottom: 6, letterSpacing: 1 }}>
-              CAMPEÃO MUNDIAL 2026
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Flag time={campeoReal} w={32} />
-              <span style={{ color: "#000", fontSize: 24, fontWeight: 900 }}>{campeoReal}</span>
+            <div style={{ fontSize: 36, marginBottom: 6 }}>🏆</div>
+            <div style={{
+              color: "#FFD700", fontSize: 11, fontWeight: 700,
+              letterSpacing: 2, textTransform: "uppercase", marginBottom: 8,
+            }}>Campeão do Mundo 2026</div>
+            <div style={{ display: "flex", alignItems: "center",
+              justifyContent: "center", gap: 12 }}>
+              <Flag time={campeoReal} size={40} />
+              <span style={{ fontSize: 26, fontWeight: 900, color: "#FFD700" }}>
+                {campeoReal}
+              </span>
             </div>
           </div>
         )}
+
+        <div ref={tabelaRef}>
+
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            marginBottom: 14,
+          }}>
+            <span style={{ fontSize: 18 }}>⚽</span>
+            <span style={{
+              fontSize: 14, fontWeight: 800, color: "#FFD700", letterSpacing: 1.5,
+            }}>FASE DE GRUPOS</span>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 14, marginBottom: 32,
+          }}>
+            {gruposEntries.map(([nome, g]) => (
+              <GrupoCard
+                key={nome} nome={nome}
+                times={g.times} jogos={g.jogos}
+                resultados={resultados}
+              />
+            ))}
+          </div>
+
+          {fases.map(f => (
+            <div key={f.titulo}>
+              <div style={{
+                fontSize: 14, fontWeight: 800, letterSpacing: 1.5,
+                color: f.isFinal ? "#FFD700" : "#F0F4FF",
+                borderLeft: `4px solid ${f.isFinal ? "#FFD700" : "#0033A0"}`,
+                paddingLeft: 10, marginTop: 28, marginBottom: 12,
+              }}>{f.titulo}</div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: 10,
+              }}>
+                {f.jogos.map(j => (
+                  <KoJogo
+                    key={j.id} jogo={j}
+                    resultados={resultados} isFinal={f.isFinal}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div style={{
+            color: "#4B5563", fontSize: 9, marginTop: 20,
+            textAlign: "center", letterSpacing: 0.5,
+          }}>
+            Horários em BRT (Brasília) · ✓ classificado para as oitavas ·
+            Bolão ANPEREZ
+          </div>
+        </div>
       </div>
     </div>
   );
