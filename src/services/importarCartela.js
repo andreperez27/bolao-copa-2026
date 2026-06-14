@@ -1,7 +1,7 @@
-import { JOGOS_TODOS } from "./jogos";
+import { JOGOS_TODOS, normalizarNomePais } from "./jogos";
 
 function limparNome(nome) {
-  return nome.replace(/\s+/g, " ").trim();
+  return normalizarNomePais(nome.replace(/\s+/g, " ").trim());
 }
 
 function parseISO(dataStr) {
@@ -64,7 +64,8 @@ export function parseCartelaHTML(html, participanteLogado) {
         const placarMatch = placarText.match(/(\d+)\s*-\s*(\d+)/);
         if (!timeA || !timeB || !placarMatch) return;
         const jogo = JOGOS_TODOS.find(
-          (j) => limparNome(j.time_a) === timeA && limparNome(j.time_b) === timeB
+          (j) => (limparNome(j.time_a) === timeA && limparNome(j.time_b) === timeB) ||
+                 (limparNome(j.time_a) === timeB && limparNome(j.time_b) === timeA)
         );
         if (!jogo) return;
         if (dataEmitido && jogoJaComecou(jogo, dataEmitido)) {
