@@ -9,8 +9,14 @@ export function parseResultadosDeAPI(matches) {
     let awayName = m.away_name || "";
     let homeGoals = m.score_home;
     let awayGoals = m.score_away;
-    let statusRaw = (m.status || "").toLowerCase();
+    let finalizado = false;
 
+    if (!homeName) {
+      homeName = m.home_team_name_en || "";
+    }
+    if (!awayName) {
+      awayName = m.away_team_name_en || "";
+    }
     if (!homeName) {
       const home = m.home_team || m.team1 || m.homeTeam || {};
       homeName = home.name || home.country || "";
@@ -19,21 +25,26 @@ export function parseResultadosDeAPI(matches) {
       const away = m.away_team || m.team2 || m.awayTeam || {};
       awayName = away.name || away.country || "";
     }
+
     if (homeGoals === undefined) {
       homeGoals = m.home_score ?? m.goals_home ?? m.homeTeam?.goals ?? m.score?.fullTime?.home;
     }
     if (awayGoals === undefined) {
       awayGoals = m.away_score ?? m.goals_away ?? m.awayTeam?.goals ?? m.score?.fullTime?.away;
     }
-    if (!statusRaw) {
-      statusRaw = (m.status || m.matchStatus || "").toLowerCase();
+
+    const statusRaw = (m.status || m.matchStatus || "").toLowerCase();
+    if (["finished", "ft", "completed", "encerrado", "fim"].includes(statusRaw)) {
+      finalizado = true;
+    } else if (m.finished === "TRUE" || m.finished === true) {
+      finalizado = true;
     }
 
     homeName = normalizarNomePais(homeName);
     awayName = normalizarNomePais(awayName);
 
     if (homeGoals === null || homeGoals === undefined || awayGoals === null || awayGoals === undefined) return;
-    if (statusRaw && !["finished", "ft", "completed", "encerrado", "fim"].includes(statusRaw)) return;
+    if (!finalizado) return;
 
     JOGOS_TODOS.forEach((j) => {
       const nomeA = normalizarNomePais(j.time_a);
@@ -58,7 +69,7 @@ export async function fetchResultadosDeURL(url) {
     throw new Error(`URL:\n${url}\nHTTP ${res.status} ${res.statusText}\n${text.slice(0, 200)}`);
   }
   const data = await res.json();
-  const arr = Array.isArray(data) ? data : data.matches || data.data || data.results || [];
+  const arr = Array.isArray(data) ? data : data.matches || data.games || data.data || data.results || [];
   console.log(`API: ${arr.length} partidas recebidas`);
   return arr;
 }
