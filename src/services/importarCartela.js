@@ -72,7 +72,10 @@ export function parseCartelaHTML(html, participanteLogado) {
           pulados.push(`${jogo.time_a} × ${jogo.time_b}`);
           return;
         }
-        palpites[jogo.id] = { gols_a: Number(placarMatch[1]), gols_b: Number(placarMatch[2]) };
+        const swapped = limparNome(jogo.time_a) !== timeA;
+        palpites[jogo.id] = swapped
+          ? { gols_a: Number(placarMatch[2]), gols_b: Number(placarMatch[1]) }
+          : { gols_a: Number(placarMatch[1]), gols_b: Number(placarMatch[2]) };
       });
     });
   }
