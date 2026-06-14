@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
-  JOGOS_GRUPOS, JOGOS_OITAVAS, JOGOS_QUARTAS,
+  JOGOS_GRUPOS, JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS,
   JOGOS_SEMI, JOGOS_FINAL, ISO,
 } from "../services/jogos";
 
@@ -386,7 +386,7 @@ export default function Tabela({ resultados, campeoReal, onVoltar }) {
     return r?.placar_a !== null && r?.placar_a !== undefined;
   }, [resultados]);
 
-  const { oitavas, quartas, semis, final: finalJogos } = useMemo(() => {
+  const { dezesseisavos, oitavas, quartas, semis, final: finalJogos } = useMemo(() => {
     const avancos = {};
     Object.entries(GRUPOS_MAP).forEach(([nome, g]) => {
       const letra = nome.replace("Grupo ", "");
@@ -397,6 +397,8 @@ export default function Tabela({ resultados, campeoReal, onVoltar }) {
         if (cl[2]) avancos[`3${letra}`] = cl[2].time;
       }
     });
+
+    const dez = resolverTimes(JOGOS_1_16, resultados, avancos);
 
     const oit = resolverTimes(JOGOS_OITAVAS, resultados, avancos);
     const avancos2 = {};
@@ -426,7 +428,7 @@ export default function Tabela({ resultados, campeoReal, onVoltar }) {
       "V Sem3/4": avancos4["V Sem3"] || avancos4["V Sem4"] || "V Semi 3/4",
     });
 
-    return { oitavas: oit, quartas: qua, semis: sem, final: fin };
+    return { dezesseisavos: dez, oitavas: oit, quartas: qua, semis: sem, final: fin };
   }, [resultados]);
 
   const handleDownload = () => {
@@ -442,10 +444,11 @@ export default function Tabela({ resultados, campeoReal, onVoltar }) {
   };
 
   const fases = [
-    { titulo: "OITAVAS DE FINAL", jogos: oitavas,    isFinal: false },
-    { titulo: "QUARTAS DE FINAL", jogos: quartas,    isFinal: false },
-    { titulo: "SEMIFINAIS",       jogos: semis,      isFinal: false },
-    { titulo: "\uD83C\uDFC6 GRANDE FINAL",  jogos: finalJogos, isFinal: true  },
+    { titulo: "SEGUNDA RODADA",   jogos: dezesseisavos, isFinal: false },
+    { titulo: "OITAVAS DE FINAL", jogos: oitavas,       isFinal: false },
+    { titulo: "QUARTAS DE FINAL", jogos: quartas,       isFinal: false },
+    { titulo: "SEMIFINAIS",       jogos: semis,         isFinal: false },
+    { titulo: "\uD83C\uDFC6 GRANDE FINAL", jogos: finalJogos, isFinal: true  },
   ];
 
   return (

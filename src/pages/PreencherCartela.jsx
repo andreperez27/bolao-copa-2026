@@ -4,6 +4,7 @@ import { Btn } from "../components/Btn";
 import { JogoCard } from "../components/JogoCard";
 import {
   JOGOS_GRUPOS,
+  JOGOS_1_16,
   JOGOS_OITAVAS,
   JOGOS_QUARTAS,
   JOGOS_SEMI,
@@ -36,7 +37,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     "Grupo A","Grupo B","Grupo C","Grupo D",
     "Grupo E","Grupo F","Grupo G","Grupo H",
     "Grupo I","Grupo J","Grupo K","Grupo L",
-    "Oitavas","Quartas","Semi","Final",
+    "Segunda Rodada","Oitavas","Quartas","Semi","Final",
   ];
 
   const isNew = !cartela?.id;
@@ -66,6 +67,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
 
   const jogosPorGrupo = (grupo) => {
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
+    if (grupo === "Segunda Rodada") return JOGOS_1_16;
     if (grupo === "Oitavas") return JOGOS_OITAVAS;
     if (grupo === "Quartas") return JOGOS_QUARTAS;
     if (grupo === "Semi") return JOGOS_SEMI;
@@ -75,6 +77,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
 
   const totalJogos = (() => {
     let t = JOGOS_GRUPOS.length;
+    if (faseAtual !== "grupos") t += JOGOS_1_16.length;
     if (faseAtual !== "grupos") t += JOGOS_OITAVAS.length;
     if (["quartas", "semi", "final"].includes(faseAtual)) t += JOGOS_QUARTAS.length;
     if (["semi", "final"].includes(faseAtual)) t += JOGOS_SEMI.length;
@@ -85,6 +88,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   const totalPalpitados = Object.keys(palpites).filter((k) => k !== "__campeo").length;
 
   const faseLabel = faseAtual === "grupos" ? "Fase de Grupos"
+    : faseAtual === "1_16" ? "Segunda Rodada"
     : faseAtual === "oitavas" ? "Oitavas"
     : faseAtual === "quartas" ? "Quartas"
     : faseAtual === "semi" ? "Semifinal"

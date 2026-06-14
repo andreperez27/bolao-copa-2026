@@ -1,4 +1,4 @@
-import { JOGOS_GRUPOS, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL } from "../services/jogos";
+import { JOGOS_GRUPOS, JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL } from "../services/jogos";
 
 export function calcularPontos(palpite, resultado) {
   if (!resultado || resultado.placar_a === null) return { pts: 0, tipo: "pendente" };
@@ -20,6 +20,12 @@ export function getFaseAtual(resultados) {
     (j) => resultados[j.id]?.placar_a !== undefined && resultados[j.id]?.placar_a !== null
   );
   if (!todosGrupos) return "grupos";
+  const todos1_16 =
+    JOGOS_1_16 &&
+    JOGOS_1_16.every(
+      (j) => resultados[j.id]?.placar_a !== undefined && resultados[j.id]?.placar_a !== null
+    );
+  if (!todos1_16) return "1_16";
   const todosOitavas =
     JOGOS_OITAVAS &&
     JOGOS_OITAVAS.every(
@@ -42,7 +48,7 @@ export function getFaseAtual(resultados) {
 }
 
 export function pontosCampeaoPorFase(fase) {
-  const mapa = { grupos: 20, oitavas: 15, quartas: 10, semi: 5, final: 2 };
+  const mapa = { grupos: 20, "1_16": 18, oitavas: 15, quartas: 10, semi: 5, final: 2 };
   return mapa[fase] || 20;
 }
 

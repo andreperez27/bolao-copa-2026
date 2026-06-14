@@ -87,7 +87,8 @@ export function parseCartelaHTML(html, participanteLogado) {
     const match = footer.textContent.match(/Campeão:\s*(.+?)(?:\(|$)/);
     if (match) {
       campeao = match[1].trim();
-      if (footer.textContent.includes("Oitavas")) campeao_fase = "oitavas";
+      if (footer.textContent.includes("Segunda Rodada")) campeao_fase = "1_16";
+      else if (footer.textContent.includes("Oitavas")) campeao_fase = "oitavas";
       else if (footer.textContent.includes("Quartas")) campeao_fase = "quartas";
       else if (footer.textContent.includes("Semi")) campeao_fase = "semi";
       else if (footer.textContent.includes("Final")) campeao_fase = "final";

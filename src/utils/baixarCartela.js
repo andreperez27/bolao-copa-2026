@@ -1,9 +1,9 @@
-import { JOGOS_GRUPOS, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL } from "../services/jogos";
+import { JOGOS_GRUPOS, JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL } from "../services/jogos";
 
 export function baixarCartelaHTML(cartela, participante) {
   if (!cartela) return;
   const palpites = cartela.palpites || {};
-  const todosJogos = [...JOGOS_GRUPOS, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL];
+  const todosJogos = [...JOGOS_GRUPOS, ...JOGOS_1_16, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL];
   const gruposPrint = [...new Set(todosJogos.map(j => j.grupo))];
   const agora = new Date().toLocaleString("pt-BR");
   const isoAgora = new Date().toISOString();
@@ -46,7 +46,7 @@ export function baixarCartelaHTML(cartela, participante) {
     html += `</tbody></table></div>`;
   });
 
-  const faseLabel = cartela.campeao_fase === "grupos" ? "Fase de Grupos" : cartela.campeao_fase === "oitavas" ? "Oitavas" : cartela.campeao_fase === "quartas" ? "Quartas" : cartela.campeao_fase === "semi" ? "Semifinal" : "Final";
+  const faseLabel = cartela.campeao_fase === "grupos" ? "Fase de Grupos" : cartela.campeao_fase === "1_16" ? "Segunda Rodada" : cartela.campeao_fase === "oitavas" ? "Oitavas" : cartela.campeao_fase === "quartas" ? "Quartas" : cartela.campeao_fase === "semi" ? "Semifinal" : "Final";
   html += `<div class="footer"><strong>Campeão:</strong> ${(cartela.campeao || "—").replace(/</g, "&lt;")}${cartela.campeao_fase ? `<span style="color:#666;font-size:11px;margin-left:8px">(definido na ${faseLabel})</span>` : ""}</div>`;
   html += `</body></html>`;
 
