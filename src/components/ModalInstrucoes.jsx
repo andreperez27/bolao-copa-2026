@@ -83,6 +83,8 @@ export function ModalInstrucoes({ onFechar }) {
               Cada <strong style={{ color: "#F0F4FF" }}>Cartela</strong> contém palpites para todos os jogos
               da Fase de Grupos + palpite do campeão. Você pode ter{" "}
               <strong style={{ color: "#FFD700" }}>múltiplas cartelas</strong> para aumentar suas chances!
+              No ranking, <strong style={{ color: "#22c55e" }}>apenas a sua melhor cartela</strong>{" "}
+              (maior pontuação) é considerada.
               Cada cartela precisa ser <strong style={{ color: "#16a34a" }}>validada pelo administrador</strong>{" "}
               após o pagamento.
             </div>
