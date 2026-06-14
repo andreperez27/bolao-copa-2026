@@ -50,12 +50,27 @@ export function parseResultadosDeAPI(matches) {
   return novos;
 }
 
+const PROXIES = [
+  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+];
+
 export async function fetchResultadosDeURL(url) {
-  let res = await fetch(url).catch(() => null);
-  if (!res || !res.ok) {
-    res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
-    if (!res || !res.ok) throw new Error("HTTP " + (res?.status || "sem resposta"));
+  let res = await fetch(url, { mode: "cors" }).catch(() => null);
+  if (res?.ok) {
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.matches || data.data || data.results || [];
   }
-  const data = await res.json();
-  return Array.isArray(data) ? data : data.matches || data.data || data.results || [];
+  console.warn("Fetch direto falhou, tentando proxies CORS...", res?.status);
+  for (const proxy of PROXIES) {
+    try {
+      res = await fetch(proxy(url));
+      if (res.ok) {
+        const data = await res.json();
+        return Array.isArray(data) ? data : data.matches || data.data || data.results || [];
+      }
+    } catch {}
+  }
+  throw new Error("API inacessível após " + (PROXIES.length + 1) + " tentativas");
 }
