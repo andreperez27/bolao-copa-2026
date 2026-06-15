@@ -121,29 +121,17 @@ export default function App() {
           return;
         }
 
-        const existingCartela = cartelas.find((c) => c.participante === nomePart);
-        const palpitesMergeados = { ...dados.palpites };
-        if (existingCartela?.palpites) {
-          Object.keys(existingCartela.palpites).forEach((key) => {
-            if (existingCartela.palpites[key]?.gols_a !== undefined) {
-              delete palpitesMergeados[key];
-            }
-          });
-        }
-        const palpitesFinais = { ...(existingCartela?.palpites || {}), ...palpitesMergeados };
-
         await salvarCartelaHook({
-          id: existingCartela?.id || "cart_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-          nome: existingCartela?.nome || "Importada",
-          palpites: palpitesFinais,
-          campeao: dados.campeao || existingCartela?.campeao || "",
-          campeao_fase: dados.campeao_fase || existingCartela?.campeao_fase || "grupos",
+          id: "cart_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+          nome: dados.nome || "Importada",
+          palpites: dados.palpites,
+          campeao: dados.campeao || "",
+          campeao_fase: dados.campeao_fase || "grupos",
           participante: nomePart,
           status: "aguardando",
         });
 
-        let msg = `Cartela importada com ${Object.keys(dados.palpites).length} palpite(s)!`;
-        if (existingCartela) msg += ` Mesclado com cartela existente (${Object.keys(palpitesMergeados).length} novo(s)).`;
+        let msg = `Nova cartela importada com ${Object.keys(dados.palpites).length} palpite(s)!`;
         if (dados.dataEmitido) msg += ` Data de exportação: ${dados.dataEmitido.toLocaleDateString("pt-BR")}.`;
         if (msgErros) msg += `\n\nAvisos:\n${msgErros}`;
         alert(msg);
@@ -151,7 +139,7 @@ export default function App() {
         alert("Erro ao importar: " + e.message);
       }
     },
-    [salvarCartelaHook, jogador, user, cartelas]
+    [salvarCartelaHook, jogador, user]
   );
 
   const handlePrintDone = useCallback(() => {
