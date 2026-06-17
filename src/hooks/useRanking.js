@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getAdminData, getConfig, salvarAdminData } from "../services/admin";
-import { parseResultadosDeAPI, fetchResultadosDeURL } from "../utils/parseResultadosAPI";
+import { parseResultadosDeAPI, fetchResultadosDeURL, API_URL_PADRAO } from "../utils/parseResultadosAPI";
 
 export function useRanking() {
   const [resultados, setResultados] = useState({});
