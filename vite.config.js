@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      selfDestroying: true,
       includeAssets: ["icons/*.png"],
       manifest: {
         name: "Bolão da Copa 2026",
@@ -23,27 +24,6 @@ export default defineConfig({
           { src: "icons/192.png", sizes: "192x192", type: "image/png" },
           { src: "icons/512.png", sizes: "512x512", type: "image/png" },
           { src: "icons/512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-        ],
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/flagcdn\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "flag-cache",
-              expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/sjleucelnptbgyjofhnz\.supabase\.co\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-cache",
-              expiration: { maxEntries: 50, maxAgeSeconds: 5 * 60 },
-            },
-          },
         ],
       },
     }),
