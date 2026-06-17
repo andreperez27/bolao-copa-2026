@@ -16,20 +16,24 @@ export function useRanking() {
     setConfigLocal(cfg);
   }, []);
 
+  const resultadosRef = useRef({});
+  const campeoRef = useRef("");
+  useEffect(() => { resultadosRef.current = resultados; }, [resultados]);
+  useEffect(() => { campeoRef.current = campeoReal; }, [campeoReal]);
+
   const autoFetchResultados = useCallback(async (url) => {
     try {
-      const matches = await fetchResultadosDeURL(url).catch(() => null);
-      if (!matches) return;
-      const novos = parseResultadosDeAPI(matches);
+      const data = await fetchResultadosDeURL(url);
+      const novos = parseResultadosDeAPI(data);
       const count = Object.keys(novos).length;
       if (count > 0) {
-        const mergeados = { ...resultados, ...novos };
+        const mergeados = { ...resultadosRef.current, ...novos };
         setResultados(mergeados);
-        salvarAdminData(mergeados, campeoReal).catch(() => {});
+        salvarAdminData(mergeados, campeoRef.current).catch(() => {});
         setUltimaAtualizacao(new Date());
       }
     } catch {}
-  }, [resultados, campeoReal]);
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -49,9 +53,9 @@ export function useRanking() {
   }, []);
 
   useEffect(() => {
-    if (!config.api_url) return;
-    autoFetchResultados(config.api_url);
-    const id = setInterval(() => autoFetchResultados(config.api_url), 120000);
+    const url = config.api_url || API_URL_PADRAO;
+    autoFetchResultados(url);
+    const id = setInterval(() => autoFetchResultados(url), 120000);
     return () => clearInterval(id);
   }, [config.api_url, autoFetchResultados]);
 
