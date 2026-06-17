@@ -79,7 +79,7 @@ export function AdminPanel({
   );
 
   const handleBuscarResultados = useCallback(async () => {
-    const url = apiUrl || "https://wheniskickoff.com/data/v1/matches.json";
+    const url = apiUrl || "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json";
     setBuscando(true);
     setMsgBusca("Buscando resultados...");
     try {
