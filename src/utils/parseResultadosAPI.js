@@ -76,6 +76,11 @@ export function parseResultadosDeAPI(data) {
   return novos;
 }
 
+const CORS_PROXIES = [
+  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+
 export async function fetchResultadosDeURL(url) {
   try {
     const res = await fetch(url, {
@@ -85,54 +90,14 @@ export async function fetchResultadosDeURL(url) {
     if (res.ok) return await res.json();
   } catch {}
 
-  const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  ];
-  for (const proxy of proxies) {
+  for (const proxyFn of CORS_PROXIES) {
+    const proxyUrl = proxyFn(url);
+    console.log("Tentando proxy:", proxyUrl.slice(0, 80) + "...");
     try {
-      const res = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
       if (res.ok) return await res.json();
     } catch {}
   }
 
   throw new Error("Não foi possível acessar: " + url);
-} "fim"].includes(statusRaw)) {
-      finalizado = true;
-    } else if (m.finished === "TRUE" || m.finished === true) {
-      finalizado = true;
-    }
-
-    homeName = normalizarNomePais(homeName);
-    awayName = normalizarNomePais(awayName);
-
-    if (homeGoals === null || homeGoals === undefined || awayGoals === null || awayGoals === undefined) return;
-    if (!finalizado) return;
-
-    JOGOS_TODOS.forEach((j) => {
-      const nomeA = normalizarNomePais(j.time_a);
-      const nomeB = normalizarNomePais(j.time_b);
-      if (
-        (nomeA.toLowerCase().includes(homeName.toLowerCase()) || homeName.toLowerCase().includes(nomeA.toLowerCase())) &&
-        (nomeB.toLowerCase().includes(awayName.toLowerCase()) || awayName.toLowerCase().includes(nomeB.toLowerCase()))
-      ) {
-        novos[j.id] = { placar_a: Number(homeGoals), placar_b: Number(awayGoals) };
-      }
-    });
-  });
-
-  return novos;
-}
-
-export async function fetchResultadosDeURL(url) {
-  console.log("Buscando:", url);
-  const res = await fetch(url, { mode: "cors" });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`URL:\n${url}\nHTTP ${res.status} ${res.statusText}\n${text.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  const arr = Array.isArray(data) ? data : data.matches || data.games || data.data || data.results || [];
-  console.log(`API: ${arr.length} partidas recebidas`);
-  return arr;
 }
