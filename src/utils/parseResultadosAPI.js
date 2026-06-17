@@ -1,20 +1,24 @@
 import { JOGOS_TODOS, normalizarNomePais } from "../services/jogos";
 
 export const API_URLS = [
-  "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json",
-  "https://worldcup26.ir/get/games",
   "https://worldcupjson.net/matches",
+  "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json",
+  "https://api.fifa.com/api/v3/calendar/matches?competitionCode=wc&seasonYear=2026&count=200",
+  "https://worldcup26.ir/get/games",
 ];
 
 export const API_URL_PADRAO = API_URLS[0];
 
 function extrairMatches(data) {
+  if (!data || typeof data !== "object") return [];
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.matches)) return data.matches;
   if (Array.isArray(data.rounds)) {
     return data.rounds.flatMap((r) => r.matches || []);
   }
-  return data.games || data.data || data.results || [];
+  if (Array.isArray(data.Results)) return data.Results;
+  const arr = data.games || data.data || data.results || [];
+  return Array.isArray(arr) ? arr : [];
 }
 
 function lerTimes(m) {
@@ -51,12 +55,16 @@ function finalizado(m) {
 export function parseResultadosDeAPI(data) {
   const novos = {};
   const matches = extrairMatches(data);
-  if (!matches.length) return novos;
+  console.log(`API: ${matches.length} partidas brutas`);
+  if (!matches.length) {
+    console.log("API: dados recebidos:", JSON.stringify(data).slice(0, 300));
+    return novos;
+  }
 
   matches.forEach((m) => {
     if (!finalizado(m)) return;
     const [rawA, rawB] = lerTimes(m);
-    if (!rawA || !rawB) return;
+    if (!rawA || !rawB) { console.log("API: times nao reconhecidos", JSON.stringify(m).slice(0, 150)); return; }
     const [ga, gb] = lerPlacar(m);
     if (ga === null || ga === undefined || gb === null || gb === undefined) return;
 
@@ -77,6 +85,7 @@ export function parseResultadosDeAPI(data) {
     });
   });
 
+  console.log(`API: ${Object.keys(novos).length} novos resultados`);
   return novos;
 }
 
@@ -108,9 +117,12 @@ async function tentarComProxy(u) {
 export async function fetchResultadosDeURL(url) {
   const urlsTentar = [url, ...API_URLS.filter((u) => u !== url)];
   for (const u of urlsTentar) {
-    console.log("Tentando:", u.slice(0, 80) + "...");
-    const data = (await tentarFetch(u)) || (await tentarComProxy(u));
-    if (data) return data;
+    console.log("Tentando:", u.slice(0, 100) + "...");
+    const data = await tentarFetch(u);
+    if (data) { console.log("OK direto:", u.slice(0, 60)); return data; }
+    const prox = await tentarComProxy(u);
+    if (prox) { console.log("OK via proxy:", u.slice(0, 60)); return prox; }
+    console.log("Falhou:", u.slice(0, 60));
   }
   throw new Error("Nenhuma API respondeu");
 }
