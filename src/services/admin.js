@@ -39,7 +39,7 @@ export async function getConfig() {
     const data = await res.json();
     return {
       valor_aposta: data?.[0]?.valor_aposta || 20,
-      api_url: data?.[0]?.api_url || "",
+      api_url: data?.[0]?.api_url || "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json",
       admin_password: data?.[0]?.admin_password || "",
       bonus_geral: data?.[0]?.bonus_geral || 0,
     };
