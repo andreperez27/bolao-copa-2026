@@ -28,42 +28,50 @@ function lerTimes(m) {
 }
 
 function lerPlacar(m) {
-  if (m.score?.ft && Array.isArray(m.score.ft) && m.score.ft.length === 2) {
+  if (m.score && m.score.ft && Array.isArray(m.score.ft) && m.score.ft.length === 2) {
     return [m.score.ft[0], m.score.ft[1]];
   }
   if (m.score_home !== undefined) return [m.score_home, m.score_away];
-  const ga = m.home_score ?? m.goals_home ?? m.homeTeam?.goals ?? m.score?.fullTime?.home ?? m.homeScore;
-  const gb = m.away_score ?? m.goals_away ?? m.awayTeam?.goals ?? m.score?.fullTime?.away ?? m.awayScore;
+  var ga = m.home_score !== undefined ? m.home_score :
+           m.goals_home !== undefined ? m.goals_home :
+           m.homeScore;
+  var gb = m.away_score !== undefined ? m.away_score :
+           m.goals_away !== undefined ? m.goals_away :
+           m.awayScore;
   return [ga, gb];
 }
 
 function finalizado(m) {
-  if (m.score?.ft && Array.isArray(m.score.ft)) return true;
+  if (m.score && m.score.ft && Array.isArray(m.score.ft)) return true;
   if (m.finished === true || m.finished === "TRUE") return true;
-  const st = (m.status || m.matchStatus || m.match_status || "").toLowerCase();
+  var st = (m.status || m.matchStatus || m.match_status || "").toLowerCase();
   return ["finished", "ft", "completed", "fim", "encerrado", "full-time"].includes(st);
 }
 
 export function parseResultadosDeAPI(data) {
-  const novos = {};
-  const matches = extrairMatches(data);
+  var novos = {};
+  var matches = extrairMatches(data);
   if (!matches.length) return novos;
 
-  matches.forEach((m) => {
+  matches.forEach(function(m) {
     if (!finalizado(m)) return;
-    const [rawA, rawB] = lerTimes(m);
+    var times = lerTimes(m);
+    var rawA = times[0];
+    var rawB = times[1];
     if (!rawA || !rawB) return;
-    const [ga, gb] = lerPlacar(m);
+    var placar = lerPlacar(m);
+    var ga = placar[0];
+    var gb = placar[1];
     if (ga === null || ga === undefined || gb === null || gb === undefined) return;
 
-    const nomeA = normalizarNomePais(rawA.trim());
-    const nomeB = normalizarNomePais(rawB.trim());
+    var nomeA = normalizarNomePais(rawA.trim());
+    var nomeB = normalizarNomePais(rawB.trim());
 
-    JOGOS_TODOS.forEach((j) => {
-      const jA = normalizarNomePais(j.time_a).toLowerCase();
-      const jB = normalizarNomePais(j.time_b).toLowerCase();
-      const aLow = nomeA.toLowerCase();
-      const bLow = nomeB.toLowerCase();
+    JOGOS_TODOS.forEach(function(j) {
+      var jA = normalizarNomePais(j.time_a).toLowerCase();
+      var jB = normalizarNomePais(j.time_b).toLowerCase();
+      var aLow = nomeA.toLowerCase();
+      var bLow = nomeB.toLowerCase();
       if (
         (jA.includes(aLow) || aLow.includes(jA)) &&
         (jB.includes(bLow) || bLow.includes(jB))
@@ -78,23 +86,23 @@ export function parseResultadosDeAPI(data) {
 
 export async function fetchResultadosDeURL(url) {
   try {
-    const res = await fetch(url, {
+    var res = await fetch(url, {
       signal: AbortSignal.timeout(8000),
       headers: { Accept: "application/json" },
     });
     if (res.ok) return await res.json();
-  } catch {}
+  } catch(e) {}
 
-  const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  var proxies = [
+    "https://corsproxy.io/?" + encodeURIComponent(url),
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
   ];
-  for (const proxy of proxies) {
+  for (var i = 0; i < proxies.length; i++) {
     try {
-      const res = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
-      if (res.ok) return await res.json();
-    } catch {}
+      var r = await fetch(proxies[i], { signal: AbortSignal.timeout(8000) });
+      if (r.ok) return await r.json();
+    } catch(e) {}
   }
 
-  throw new Error("Não foi possível acessar: " + url);
+  throw new Error("Nao foi possivel acessar: " + url);
 }
