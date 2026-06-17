@@ -37,7 +37,6 @@ export function useRanking() {
 
   useEffect(() => {
     let ativo = true;
-
     async function carregar() {
       const admin = await getAdminData();
       if (!ativo) return;
@@ -46,7 +45,6 @@ export function useRanking() {
       const cfg = await getConfig();
       if (ativo) setConfigLocal(cfg);
     }
-
     carregar();
     const id = setInterval(carregar, 30000);
     return () => { ativo = false; clearInterval(id); };
