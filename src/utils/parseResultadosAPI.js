@@ -1,24 +1,17 @@
 import { JOGOS_TODOS, normalizarNomePais } from "../services/jogos";
 
 export const API_URLS = [
-  "https://worldcupjson.net/matches",
   "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json",
-  "https://api.fifa.com/api/v3/calendar/matches?competitionCode=wc&seasonYear=2026&count=200",
   "https://worldcup26.ir/get/games",
+  "https://worldcupjson.net/matches",
 ];
 
 export const API_URL_PADRAO = API_URLS[0];
 
 function extrairMatches(data) {
-  if (!data || typeof data !== "object") return [];
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.matches)) return data.matches;
-  if (Array.isArray(data.rounds)) {
-    return data.rounds.flatMap((r) => r.matches || []);
-  }
-  if (Array.isArray(data.Results)) return data.Results;
-  const arr = data.games || data.data || data.results || [];
-  return Array.isArray(arr) ? arr : [];
+  return data.games || data.data || data.results || [];
 }
 
 function lerTimes(m) {
@@ -28,11 +21,10 @@ function lerTimes(m) {
   if (homeStr) return [homeStr, awayStr];
   const home = m.home_team || m.homeTeam || {};
   const away = m.away_team || m.awayTeam || {};
-  const n1 = home.name || home.country || home.team_name || "";
-  const n2 = away.name || away.country || away.team_name || "";
-  if (n1 && n2) return [n1, n2];
-  if (m.team1 && typeof m.team1 === "object") return [m.team1.name || "", m.team2?.name || ""];
-  return [n1, n2];
+  return [
+    home.name || home.country || home.team_name || "",
+    away.name || away.country || away.team_name || "",
+  ];
 }
 
 function lerPlacar(m) {
@@ -55,16 +47,12 @@ function finalizado(m) {
 export function parseResultadosDeAPI(data) {
   const novos = {};
   const matches = extrairMatches(data);
-  console.log(`API: ${matches.length} partidas brutas`);
-  if (!matches.length) {
-    console.log("API: dados recebidos:", JSON.stringify(data).slice(0, 300));
-    return novos;
-  }
+  if (!matches.length) return novos;
 
   matches.forEach((m) => {
     if (!finalizado(m)) return;
     const [rawA, rawB] = lerTimes(m);
-    if (!rawA || !rawB) { console.log("API: times nao reconhecidos", JSON.stringify(m).slice(0, 150)); return; }
+    if (!rawA || !rawB) return;
     const [ga, gb] = lerPlacar(m);
     if (ga === null || ga === undefined || gb === null || gb === undefined) return;
 
@@ -85,44 +73,28 @@ export function parseResultadosDeAPI(data) {
     });
   });
 
-  console.log(`API: ${Object.keys(novos).length} novos resultados`);
   return novos;
 }
 
-async function tentarFetch(u) {
+export async function fetchResultadosDeURL(url) {
   try {
-    const res = await fetch(u, { signal: AbortSignal.timeout(8000), headers: { Accept: "application/json" } });
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      headers: { Accept: "application/json" },
+    });
     if (res.ok) return await res.json();
   } catch {}
-  return null;
-}
 
-const CORS_PROXIES = [
-  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-];
-
-async function tentarComProxy(u) {
-  for (const proxyFn of CORS_PROXIES) {
-    const proxyUrl = proxyFn(u);
-    console.log("Tentando proxy:", proxyUrl.slice(0, 80) + "...");
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+  for (const proxy of proxies) {
     try {
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
       if (res.ok) return await res.json();
     } catch {}
   }
-  return null;
-}
 
-export async function fetchResultadosDeURL(url) {
-  const urlsTentar = [url, ...API_URLS.filter((u) => u !== url)];
-  for (const u of urlsTentar) {
-    console.log("Tentando:", u.slice(0, 100) + "...");
-    const data = await tentarFetch(u);
-    if (data) { console.log("OK direto:", u.slice(0, 60)); return data; }
-    const prox = await tentarComProxy(u);
-    if (prox) { console.log("OK via proxy:", u.slice(0, 60)); return prox; }
-    console.log("Falhou:", u.slice(0, 60));
-  }
-  throw new Error("Nenhuma API respondeu");
+  throw new Error("Não foi possível acessar: " + url);
 }
