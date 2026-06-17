@@ -76,28 +76,37 @@ export function parseResultadosDeAPI(data) {
   return novos;
 }
 
+async function tentarFetch(u) {
+  try {
+    const res = await fetch(u, { signal: AbortSignal.timeout(8000), headers: { Accept: "application/json" } });
+    if (res.ok) return await res.json();
+  } catch {}
+  return null;
+}
+
 const CORS_PROXIES = [
   (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
   (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
 ];
 
-export async function fetchResultadosDeURL(url) {
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(8000),
-      headers: { Accept: "application/json" },
-    });
-    if (res.ok) return await res.json();
-  } catch {}
-
+async function tentarComProxy(u) {
   for (const proxyFn of CORS_PROXIES) {
-    const proxyUrl = proxyFn(url);
+    const proxyUrl = proxyFn(u);
     console.log("Tentando proxy:", proxyUrl.slice(0, 80) + "...");
     try {
       const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
       if (res.ok) return await res.json();
     } catch {}
   }
+  return null;
+}
 
-  throw new Error("Não foi possível acessar: " + url);
+export async function fetchResultadosDeURL(url) {
+  const urlsTentar = [url, ...API_URLS.filter((u) => u !== url)];
+  for (const u of urlsTentar) {
+    console.log("Tentando:", u.slice(0, 80) + "...");
+    const data = (await tentarFetch(u)) || (await tentarComProxy(u));
+    if (data) return data;
+  }
+  throw new Error("Nenhuma API respondeu");
 }
