@@ -11,6 +11,9 @@ export const API_URL_PADRAO = API_URLS[0];
 function extrairMatches(data) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.matches)) return data.matches;
+  if (Array.isArray(data.rounds)) {
+    return data.rounds.flatMap((r) => r.matches || []);
+  }
   return data.games || data.data || data.results || [];
 }
 
@@ -21,10 +24,11 @@ function lerTimes(m) {
   if (homeStr) return [homeStr, awayStr];
   const home = m.home_team || m.homeTeam || {};
   const away = m.away_team || m.awayTeam || {};
-  return [
-    home.name || home.country || home.team_name || "",
-    away.name || away.country || away.team_name || "",
-  ];
+  const n1 = home.name || home.country || home.team_name || "";
+  const n2 = away.name || away.country || away.team_name || "";
+  if (n1 && n2) return [n1, n2];
+  if (m.team1 && typeof m.team1 === "object") return [m.team1.name || "", m.team2?.name || ""];
+  return [n1, n2];
 }
 
 function lerPlacar(m) {
