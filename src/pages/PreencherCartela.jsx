@@ -13,6 +13,7 @@ import {
   TODOS_TIMES,
 } from "../services/jogos";
 import { getFaseAtual, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
+import { getKnockoutState } from "../utils/knockout";
 import { isJogoBloqueado } from "../utils/datas";
 import { listarCartelasIA } from "../services/ia";
 import SugestoesIA from "../components/SugestoesIA";
@@ -40,6 +41,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   const [campeaoTravado, setCampeaoTravado] = useState(false);
 
   const faseAtual = getFaseAtual(resultados);
+const knockoutState = React.useMemo(() => getKnockoutState(resultados || {}), [resultados]);
 
   useEffect(() => {
     listarCartelasIA().then(setIaCartelas).catch(() => {});
@@ -147,11 +149,46 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
 
   const jogosPorGrupo = (grupo) => {
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
-    if (grupo === "Segunda Rodada") return JOGOS_1_16;
-    if (grupo === "Oitavas") return JOGOS_OITAVAS;
-    if (grupo === "Quartas") return JOGOS_QUARTAS;
-    if (grupo === "Semi") return JOGOS_SEMI;
-    if (grupo === "Final") return JOGOS_FINAL;
+    if (grupo === "Segunda Rodada") {
+      const resolved = knockoutState.r32.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
+      return JOGOS_1_16.map(j => {
+        const m = resolved[j.id];
+        if (!m) return j;
+        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+      });
+    }
+    if (grupo === "Oitavas") {
+      const resolved = knockoutState.oitavas.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
+      return JOGOS_OITAVAS.map(j => {
+        const m = resolved[j.id];
+        if (!m) return j;
+        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+      });
+    }
+    if (grupo === "Quartas") {
+      const resolved = knockoutState.quartas.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
+      return JOGOS_QUARTAS.map(j => {
+        const m = resolved[j.id];
+        if (!m) return j;
+        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+      });
+    }
+    if (grupo === "Semi") {
+      const resolved = knockoutState.semis.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
+      return JOGOS_SEMI.map(j => {
+        const m = resolved[j.id];
+        if (!m) return j;
+        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+      });
+    }
+    if (grupo === "Final") {
+      const resolved = knockoutState.final.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
+      return JOGOS_FINAL.map(j => {
+        const m = resolved[j.id];
+        if (!m) return j;
+        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+      });
+    }
     return [];
   };
 
@@ -494,7 +531,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
                 palpite={palpites[jogo.id]}
                 resultado={resultados?.[jogo.id]}
                 onChange={handlePalpite}
-                disabled={!isDono}
+                disabled={!isDono || jogo._unlocked === false}
               />
             <SugestoesIA iaCartelas={iaCartelas} jogoId={jogo.id} />
           </div>

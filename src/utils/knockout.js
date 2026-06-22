@@ -25,22 +25,9 @@ function getMatchResult(matchId, resultados) {
   return { winner: ga > gb ? "team1" : "team2", ga, gb };
 }
 
-function resolveWinner(matchId, resolvedTeams, resultados) {
-  const match = resolvedTeams[matchId];
-  if (!match) return null;
-  const res = getMatchResult(matchId, resultados);
-  if (!res) return null;
-  return res.winner === "team1" ? match.team1 : match.team2;
-}
-
-export function getKnockoutState(resultados, standings) {
-  if (!standings) {
-    standings = [];
-    const letras = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
-    for (const letra of letras) {
-      standings.push({ grupo: letra, times: calcularGrupo(letra, resultados) });
-    }
-  }
+export function getKnockoutState(resultados) {
+  const letras = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
+  const standings = letras.map(letra => ({ grupo: letra, times: calcularGrupo(letra, resultados) }));
 
   const groupsFinished = allGroupsFinished(resultados);
   const thirdData = calculateThirdPlaceRanking(resultados);
@@ -76,8 +63,8 @@ export function getKnockoutState(resultados, standings) {
 
     resolvedR32[m.id] = {
       id: m.id,
-      team1: team1 || `1º ${m.slot1.grupo === "3" ? "3º " + m.slot1.grupo : "Grupo " + m.slot1.grupo}`,
-      team2: team2 || (m.type === "B" ? "3º classificado" : `2º ${m.slot2.grupo === "3" ? "3º " + m.slot2.grupo : "Grupo " + m.slot2.grupo}`),
+      team1: team1 || `1º ${m.slot1.grupo}`,
+      team2: team2 || (m.type === "B" ? "3º a definir" : `2º ${m.slot2.grupo}`),
       team1Confirmed,
       team2Confirmed,
       unlocked,
@@ -87,42 +74,46 @@ export function getKnockoutState(resultados, standings) {
     };
   }
 
-  function resolvePhase(mapping, prevPhase) {
+  function resolvePhase(mapping, prevPhase, phaseLabel) {
     const result = {};
     for (const m of mapping) {
       const team1Ref = m.slot1.match ? prevPhase[m.slot1.match] : null;
       const team2Ref = m.slot2.match ? prevPhase[m.slot2.match] : null;
 
-      let team1 = team1Ref?.winner || team1Ref?.team1 || null;
-      let team2 = team2Ref?.winner || team2Ref?.team1 || null;
+      const winner1 = team1Ref?.winner || null;
+      const winner2 = team2Ref?.winner || null;
 
-      const team1Confirmed = !!team1Ref?.winner;
-      const team2Confirmed = !!team2Ref?.winner;
-      const unlocked = team1Confirmed && team2Confirmed;
+      const resolved = team1Ref?.winner && team2Ref?.winner;
+      const unlocked = resolved;
+
+      const placeholder1 = `Vencedor ${m.slot1.match || ""}`;
+      const placeholder2 = `Vencedor ${m.slot2.match || ""}`;
 
       const res = getMatchResult(m.id, resultados);
-      const winner = res
-        ? (res.winner === "team1" ? team1 : team2)
+      const matchWinner = res
+        ? (res.winner === "team1" ? winner1 : winner2)
         : null;
 
       result[m.id] = {
         id: m.id,
-        team1: team1 || team1Ref?.team1 || "A definir",
-        team2: team2 || team2Ref?.team1 || "A definir",
-        team1Confirmed,
-        team2Confirmed,
+        team1: winner1,
+        team2: winner2,
+        placeholder1,
+        placeholder2,
+        team1Confirmed: !!winner1,
+        team2Confirmed: !!winner2,
         unlocked,
         result: res,
-        winner,
+        winner: matchWinner,
       };
     }
     return result;
   }
 
-  const resolvedOitavas = resolvePhase(OITAVAS_MAPPING, resolvedR32);
-  const resolvedQuartas = resolvePhase(QUARTAS_MAPPING, resolvedOitavas);
-  const resolvedSemi = resolvePhase(SEMI_MAPPING, resolvedQuartas);
-  const resolvedFinal = resolvePhase(FINAL_MAPPING, resolvedSemi);
+  const resolvedOitavas = resolvePhase(OITAVAS_MAPPING, resolvedR32, "Oitavas");
+  const resolvedQuartas = resolvePhase(QUARTAS_MAPPING, resolvedOitavas, "Quartas");
+  const resolvedSemi = resolvePhase(SEMI_MAPPING, resolvedQuartas, "Semi");
+  const resolvedFinal = resolvePhase(FINAL_MAPPING, resolvedSemi, "Final");
 
   return {
     r32: Object.values(resolvedR32).sort((a, b) => {
@@ -135,5 +126,6 @@ export function getKnockoutState(resultados, standings) {
     final: Object.values(resolvedFinal),
     groupsFinished,
     thirdFinalized: thirdData.finalized,
+    standings,
   };
 }

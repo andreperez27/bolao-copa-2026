@@ -299,11 +299,11 @@ function KoJogo({ match, resultados, isFinal }) {
   const res = resultados?.[match.id];
   const ok  = res?.placar_a !== null && res?.placar_a !== undefined;
 
-  const team1Name = match.team1 || (match.unlocked ? "" : "A definir");
-  const team2Name = match.team2 || (match.unlocked ? "" : "A definir");
+  const team1Name = match.team1 || match.placeholder1 || "A definir";
+  const team2Name = match.team2 || match.placeholder2 || "A definir";
 
   const isHolder = n => !n || n.startsWith("1º") || n.startsWith("2º") || n.startsWith("3º") ||
-    n.includes("A definir") || n === "3º classificado";
+    n.includes("A definir") || n === "3º classificado" || n.startsWith("Vencedor");
 
   const lados = [
     { nome: team1Name, gol: ok ? res.placar_a : null, confirmed: match.team1Confirmed },
