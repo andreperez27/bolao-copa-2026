@@ -13,7 +13,7 @@ import {
   TODOS_TIMES,
 } from "../services/jogos";
 import { getFaseAtual, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
-import { calcularGrupo } from "../utils/standings";
+import { calcularGrupo, allGroupsFinished } from "../utils/standings";
 import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING } from "../utils/bracketMapping";
 import { isJogoBloqueado } from "../utils/datas";
 import { listarCartelasIA } from "../services/ia";
@@ -158,20 +158,22 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   };
 
   const jogosPorGrupo = (grupo) => {
+    const resultadosR = resultados || {};
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
     if (grupo === "Segunda Rodada") {
-      const resultadosR = resultados || {};
       const resolved = {};
       for (const m of R32_MAPPING) {
         const grupo1 = standings.find(s => s.grupo === m.slot1.grupo);
         const grupo2 = standings.find(s => s.grupo === m.slot2.grupo);
         const t1 = grupo1?.times?.[m.slot1.pos - 1];
         const t2 = grupo2?.times?.[m.slot2.pos - 1];
-        const confirmed = (t1?.confirmed && t2?.confirmed) || false;
+        const unlocked = m.type === "A"
+          ? !!(t1?.time && t2?.time)
+          : !!(t1?.confirmed && t2?.confirmed && allGroupsFinished(resultadosR));
         resolved[m.id] = {
           time_a: t1?.time || (m.type === "A" ? `1º ${m.slot1.grupo}` : `3º ${m.slot1.grupo.replace("3", "")}`),
           time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : `3º ${m.slot2.grupo.replace("3", "")}`),
-          unlocked: confirmed,
+          unlocked,
         };
       }
       return JOGOS_1_16.map(j => {
