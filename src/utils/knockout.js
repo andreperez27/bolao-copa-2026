@@ -1,4 +1,4 @@
-import { allGroupsFinished } from "./standings";
+import { allGroupsFinished, calcularGrupo } from "./standings";
 import { calculateThirdPlaceRanking, getThirdPlaceSlots } from "./thirdPlace";
 import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING } from "./bracketMapping";
 
@@ -38,7 +38,6 @@ export function getKnockoutState(resultados, standings) {
     standings = [];
     const letras = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
     for (const letra of letras) {
-      const { calcularGrupo } = require("./standings");
       standings.push({ grupo: letra, times: calcularGrupo(letra, resultados) });
     }
   }

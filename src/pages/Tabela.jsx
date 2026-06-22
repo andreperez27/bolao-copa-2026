@@ -41,7 +41,6 @@ function StatusBadge({ status, confirmed }) {
 function GrupoCard({ nome, resultados }) {
   const letra = nome.replace("Grupo ", "");
   const { times: classif, pendentes } = useMemo(() => {
-    const { calcularGrupo } = require("../utils/standings");
     const jogos = JOGOS_GRUPOS.filter(j => j.grupo === nome);
     const times = [];
     const seen = new Set();
