@@ -5,7 +5,7 @@ import { useCartelas } from "./hooks/useCartelas";
 import { useRanking } from "./hooks/useRanking";
 import { salvarAdminData } from "./services/admin";
 import { getFaseAtual } from "./utils/pontuacao";
-import { deletarCartela, listCartelasAtivas } from "./services/cartelas";
+import { deletarCartela } from "./services/cartelas";
 import { deletarJogador } from "./services/jogadores";
 import Login from "./pages/Login";
 import MinhasCartelas from "./pages/MinhasCartelas";
@@ -107,32 +107,10 @@ export default function App() {
     setCartelaPrint(cartela);
   }, []);
 
-  const handleNovaCartela = useCallback(async () => {
-    const nome = jogador?.nome || user?.nome || "";
-    if (!nome) return;
-    try {
-      const ativas = await listCartelasAtivas("", nome);
-      if (ativas.length > 0) {
-        if (!window.confirm(
-          `Você já possui uma cartela ativa (${ativas[0].nome || "sem nome"}).\n\n` +
-          `Deseja editá-la? Se criar uma nova, a atual será arquivada.`
-        )) return;
-        if (window.confirm(`Criar nova cartela (a atual será arquivada)?`)) {
-          setCartelaEditando(null);
-          navigate("/preencher-cartela");
-        } else {
-          setCartelaEditando(ativas[0]);
-          navigate("/preencher-cartela");
-        }
-      } else {
-        setCartelaEditando(null);
-        navigate("/preencher-cartela");
-      }
-    } catch {
-      setCartelaEditando(null);
-      navigate("/preencher-cartela");
-    }
-  }, [jogador, user, navigate, setCartelaEditando]);
+  const handleNovaCartela = useCallback(() => {
+    setCartelaEditando(null);
+    navigate("/preencher-cartela");
+  }, [navigate, setCartelaEditando]);
 
   const handleImportarCartela = useCallback(
     async (file) => {

@@ -4,12 +4,20 @@ export async function getAdminData() {
   try {
     const res = await supabaseFetch("/rest/v1/admin?select=*&id=eq.1");
     const data = await res.json();
+    const resultadosRaw = data?.[0]?.resultados || {};
+    const viceCampeaoReal = resultadosRaw?.__vice_campeao_real || data?.[0]?.vice_campeao_real || "";
+    const artilheiroRealNome = resultadosRaw?.__artilheiro_real_nome || data?.[0]?.artilheiro_real_nome || "";
+    const artilheiroRealSelecao = resultadosRaw?.__artilheiro_real_selecao || data?.[0]?.artilheiro_real_selecao || "";
+    const resultados = { ...resultadosRaw };
+    delete resultados.__vice_campeao_real;
+    delete resultados.__artilheiro_real_nome;
+    delete resultados.__artilheiro_real_selecao;
     return {
-      resultados: data?.[0]?.resultados || {},
+      resultados,
       campeoReal: data?.[0]?.campeo_real || "",
-      viceCampeaoReal: data?.[0]?.vice_campeao_real || "",
-      artilheiroRealNome: data?.[0]?.artilheiro_real_nome || "",
-      artilheiroRealSelecao: data?.[0]?.artilheiro_real_selecao || "",
+      viceCampeaoReal,
+      artilheiroRealNome,
+      artilheiroRealSelecao,
     };
   } catch {
     return { resultados: {}, campeoReal: "", viceCampeaoReal: "", artilheiroRealNome: "", artilheiroRealSelecao: "" };
@@ -17,12 +25,15 @@ export async function getAdminData() {
 }
 
 export async function salvarAdminData(resultados, campeoReal, viceCampeaoReal, artilheiroRealNome, artilheiroRealSelecao) {
+  const resultadosComMeta = {
+    ...(resultados || {}),
+  };
+  if (viceCampeaoReal) resultadosComMeta.__vice_campeao_real = viceCampeaoReal;
+  if (artilheiroRealNome) resultadosComMeta.__artilheiro_real_nome = artilheiroRealNome;
+  if (artilheiroRealSelecao) resultadosComMeta.__artilheiro_real_selecao = artilheiroRealSelecao;
   const body = {
-    resultados,
+    resultados: resultadosComMeta,
     campeo_real: campeoReal,
-    vice_campeao_real: viceCampeaoReal || undefined,
-    artilheiro_real_nome: artilheiroRealNome || undefined,
-    artilheiro_real_selecao: artilheiroRealSelecao || undefined,
     updated_at: new Date().toISOString(),
   };
   const res = await supabaseFetch("/rest/v1/admin?id=eq.1", {

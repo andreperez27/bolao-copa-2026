@@ -27,6 +27,12 @@ export default function Ranking({
 }) {
   const medalhas = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
 
+  function getPalpite(campo, c) {
+    if (c[campo]) return c[campo];
+    const m = { palpite_vice_campeao: "__vice_campeao", palpite_artilheiro_nome: "__artilheiro_nome", palpite_artilheiro_selecao: "__artilheiro_selecao" };
+    return c.palpites?.[m[campo]] || "";
+  }
+
   function calcularComBonus(c) {
     let pts = 0;
     let total = 0;
@@ -36,7 +42,7 @@ export default function Ranking({
     let vencedoresCertos = 0;
     let empatesPalpitados = 0;
     for (const [k, v] of Object.entries(c.palpites || {})) {
-      if (k === "__campeo") continue;
+      if (k === "__campeo" || k.startsWith("__")) continue;
       total++;
       const r = resultados[k];
       const { pts: pt, tipo } = calcularPontos(v, r);
@@ -50,16 +56,19 @@ export default function Ranking({
     if (campeoReal && c.campeao === campeoReal) {
       pts += pontosCampeaoPorFase(c.campeao_fase || "grupos");
     }
-    if (viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal) {
+    const vice = getPalpite("palpite_vice_campeao", c);
+    if (viceCampeaoReal && vice === viceCampeaoReal) {
       pts += pontosViceCampeaoPorFase(c.campeao_fase || "grupos");
     }
-    if (artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome &&
-        c.palpite_artilheiro_nome && (!artilheiroRealSelecao || c.palpite_artilheiro_selecao === artilheiroRealSelecao)) {
+    const artNome = getPalpite("palpite_artilheiro_nome", c);
+    const artSel = getPalpite("palpite_artilheiro_selecao", c);
+    if (artilheiroRealNome && artNome === artilheiroRealNome &&
+        artNome && (!artilheiroRealSelecao || artSel === artilheiroRealSelecao)) {
       pts += pontosArtilheiro();
     }
     if (campeoReal && c.campeao === campeoReal &&
-        viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal &&
-        artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome) {
+        viceCampeaoReal && vice === viceCampeaoReal &&
+        artilheiroRealNome && artNome === artilheiroRealNome) {
       pts += bonusCombo();
     }
     pts += Number(config?.bonus_geral) || 0;
@@ -295,15 +304,15 @@ export default function Ranking({
                   {c.campeao === campeoReal && campeoReal
                     ? "\u2705 +" + pontosCampeaoPorFase(c.campeao_fase || "grupos")
                     : ""}
-                  {viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal && (
+                  {viceCampeaoReal && getPalpite("palpite_vice_campeao", c) === viceCampeaoReal && (
                     <span style={{ color: "#C0C0C0" }}> \u2022 Vice \u2705</span>
                   )}
-                  {artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome && (
+                  {artilheiroRealNome && getPalpite("palpite_artilheiro_nome", c) === artilheiroRealNome && (
                     <span style={{ color: "#FFD700" }}> \u2022 Artilheiro \u2705</span>
                   )}
                   {campeoReal && c.campeao === campeoReal &&
-                   viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal &&
-                   artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome && (
+                   viceCampeaoReal && getPalpite("palpite_vice_campeao", c) === viceCampeaoReal &&
+                   artilheiroRealNome && getPalpite("palpite_artilheiro_nome", c) === artilheiroRealNome && (
                     <span style={{ color: "#16a34a", fontWeight: 700 }}> \u2022 Combo! +{bonusCombo()}</span>
                   )}
                   <span style={{ marginLeft: 6 }}>

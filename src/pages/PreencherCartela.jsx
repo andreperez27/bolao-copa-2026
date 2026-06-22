@@ -32,9 +32,9 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   const [nomeCartela, setNomeCartela] = useState(cartela?.nome || "");
   const [palpites, setPalpites] = useState(cartela?.palpites || {});
   const [campeao, setCampeao] = useState(cartela?.campeao || "");
-  const [viceCampeao, setViceCampeao] = useState(cartela?.palpite_vice_campeao || "");
-  const [artilheiroNome, setArtilheiroNome] = useState(cartela?.palpite_artilheiro_nome || "");
-  const [artilheiroSelecao, setArtilheiroSelecao] = useState(cartela?.palpite_artilheiro_selecao || "");
+  const [viceCampeao, setViceCampeao] = useState(cartela?.palpites?.__vice_campeao || cartela?.palpite_vice_campeao || "");
+  const [artilheiroNome, setArtilheiroNome] = useState(cartela?.palpites?.__artilheiro_nome || cartela?.palpite_artilheiro_nome || "");
+  const [artilheiroSelecao, setArtilheiroSelecao] = useState(cartela?.palpites?.__artilheiro_selecao || cartela?.palpite_artilheiro_selecao || "");
   const [grupoAtivo, setGrupoAtivo] = useState("Grupo A");
   const [iaCartelas, setIaCartelas] = useState([]);
   const [campeaoTravado, setCampeaoTravado] = useState(false);
@@ -102,11 +102,8 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     setArtilheiroSelecao(artSelIA);
     onSalvar({
       nome: `${nomeCartela || nomeUsuario} (IA ${iaCartela.participante.split(" ")[1]})`,
-      palpites: novos,
+      palpites: { ...novos, __vice_campeao: viceIA, __artilheiro_nome: artNomeIA, __artilheiro_selecao: artSelIA },
       campeao: campeaoIA,
-      palpite_vice_campeao: viceIA,
-      palpite_artilheiro_nome: artNomeIA,
-      palpite_artilheiro_selecao: artSelIA,
       campeao_fase: campeaoIA ? faseAtual : undefined,
     });
   };
@@ -143,11 +140,8 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     onSalvar({
       ...cartela,
       nome: nomeCartela.trim() || "Cartela",
-      palpites: palpitesFiltrados,
+      palpites: { ...palpitesFiltrados, __vice_campeao: viceCampeao, __artilheiro_nome: artilheiroNome, __artilheiro_selecao: artilheiroSelecao },
       campeao,
-      palpite_vice_campeao: viceCampeao,
-      palpite_artilheiro_nome: artilheiroNome,
-      palpite_artilheiro_selecao: artilheiroSelecao,
       campeao_fase: novaCampeaoFase,
     });
   };
