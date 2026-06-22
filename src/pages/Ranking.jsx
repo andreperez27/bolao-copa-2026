@@ -61,9 +61,7 @@ export default function Ranking({
       pts += pontosViceCampeaoPorFase(c.campeao_fase || "grupos");
     }
     const artNome = getPalpite("palpite_artilheiro_nome", c);
-    const artSel = getPalpite("palpite_artilheiro_selecao", c);
-    if (artilheiroRealNome && artNome === artilheiroRealNome &&
-        artNome && (!artilheiroRealSelecao || artSel === artilheiroRealSelecao)) {
+    if (artilheiroRealNome && artNome === artilheiroRealNome && artNome) {
       pts += pontosArtilheiro();
     }
     if (campeoReal && c.campeao === campeoReal &&

@@ -34,7 +34,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   const [campeao, setCampeao] = useState(cartela?.campeao || "");
   const [viceCampeao, setViceCampeao] = useState(cartela?.palpites?.__vice_campeao || cartela?.palpite_vice_campeao || "");
   const [artilheiroNome, setArtilheiroNome] = useState(cartela?.palpites?.__artilheiro_nome || cartela?.palpite_artilheiro_nome || "");
-  const [artilheiroSelecao, setArtilheiroSelecao] = useState(cartela?.palpites?.__artilheiro_selecao || cartela?.palpite_artilheiro_selecao || "");
+
   const [grupoAtivo, setGrupoAtivo] = useState("Grupo A");
   const [iaCartelas, setIaCartelas] = useState([]);
   const [campeaoTravado, setCampeaoTravado] = useState(false);
@@ -99,10 +99,9 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     setCampeao(campeaoIA);
     setViceCampeao(viceIA);
     setArtilheiroNome(artNomeIA);
-    setArtilheiroSelecao(artSelIA);
     onSalvar({
       nome: `${nomeCartela || nomeUsuario} (IA ${iaCartela.participante.split(" ")[1]})`,
-      palpites: { ...novos, __vice_campeao: viceIA, __artilheiro_nome: artNomeIA, __artilheiro_selecao: artSelIA },
+      palpites: { ...novos, __vice_campeao: viceIA, __artilheiro_nome: artNomeIA },
       campeao: campeaoIA,
       campeao_fase: campeaoIA ? faseAtual : undefined,
     });
@@ -140,7 +139,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     onSalvar({
       ...cartela,
       nome: nomeCartela.trim() || "Cartela",
-      palpites: { ...palpitesFiltrados, __vice_campeao: viceCampeao, __artilheiro_nome: artilheiroNome, __artilheiro_selecao: artilheiroSelecao },
+      palpites: { ...palpitesFiltrados, __vice_campeao: viceCampeao, __artilheiro_nome: artilheiroNome },
       campeao,
       campeao_fase: novaCampeaoFase,
     });
@@ -397,7 +396,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
               {"\u26BD"} Artilheiro +{pontosArtilheiroAtual} pts
             </span>
             <span style={{ color: "#8B9CC8", fontSize: 12, fontWeight: 400 }}>
-              (fixo) {comboAtual > 0 && <span style={{ color: "#16a34a" }}> \u00B7 Combo +{comboAtual} pts se acertar os 3</span>}
+              (fixo) {comboAtual > 0 && <span style={{ color: "#16a34a" }}> Combo +{comboAtual} pts se acertar os 3</span>}
             </span>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
@@ -416,29 +415,6 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
                 fontSize: 15,
               }}
             />
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <select
-              value={artilheiroSelecao}
-              onChange={(e) => setArtilheiroSelecao(e.target.value)}
-              disabled={!isDono || campeaoTravado}
-              style={{
-                flex: 1,
-                background: "#1a2234",
-                border: "2px solid #1E2A45",
-                borderRadius: 8,
-                color: "#F0F4FF",
-                padding: "10px 12px",
-                fontSize: 15,
-              }}
-            >
-              <option value="">Seleção do artilheiro...</option>
-              {TODOS_TIMES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
           </div>
         </Card>
 
