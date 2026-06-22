@@ -2,21 +2,27 @@ import { supabaseFetch, supabaseHeaders, SUPABASE_URL } from "./supabase";
 
 export async function getAdminData() {
   try {
-    const res = await supabaseFetch("/rest/v1/admin?select=resultados,campeo_real&id=eq.1");
+    const res = await supabaseFetch("/rest/v1/admin?select=*&id=eq.1");
     const data = await res.json();
     return {
       resultados: data?.[0]?.resultados || {},
       campeoReal: data?.[0]?.campeo_real || "",
+      viceCampeaoReal: data?.[0]?.vice_campeao_real || "",
+      artilheiroRealNome: data?.[0]?.artilheiro_real_nome || "",
+      artilheiroRealSelecao: data?.[0]?.artilheiro_real_selecao || "",
     };
   } catch {
-    return { resultados: {}, campeoReal: "" };
+    return { resultados: {}, campeoReal: "", viceCampeaoReal: "", artilheiroRealNome: "", artilheiroRealSelecao: "" };
   }
 }
 
-export async function salvarAdminData(resultados, campeoReal) {
+export async function salvarAdminData(resultados, campeoReal, viceCampeaoReal, artilheiroRealNome, artilheiroRealSelecao) {
   const body = {
     resultados,
     campeo_real: campeoReal,
+    vice_campeao_real: viceCampeaoReal || undefined,
+    artilheiro_real_nome: artilheiroRealNome || undefined,
+    artilheiro_real_selecao: artilheiroRealSelecao || undefined,
     updated_at: new Date().toISOString(),
   };
   const res = await supabaseFetch("/rest/v1/admin?id=eq.1", {

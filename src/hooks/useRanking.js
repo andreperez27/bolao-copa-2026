@@ -5,6 +5,9 @@ import { parseResultadosDeAPI, fetchResultadosDeURL, API_URLS, API_URL_PADRAO } 
 export function useRanking() {
   const [resultados, setResultados] = useState({});
   const [campeoReal, setCampeoReal] = useState("");
+  const [viceCampeaoReal, setViceCampeaoReal] = useState("");
+  const [artilheiroRealNome, setArtilheiroRealNome] = useState("");
+  const [artilheiroRealSelecao, setArtilheiroRealSelecao] = useState("");
   const [config, setConfigLocal] = useState({ valor_aposta: 20, api_url: "" });
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
 
@@ -12,6 +15,9 @@ export function useRanking() {
     const admin = await getAdminData();
     setResultados(admin.resultados);
     setCampeoReal(admin.campeoReal);
+    setViceCampeaoReal(admin.viceCampeaoReal || "");
+    setArtilheiroRealNome(admin.artilheiroRealNome || "");
+    setArtilheiroRealSelecao(admin.artilheiroRealSelecao || "");
     const cfg = await getConfig();
     setConfigLocal(cfg);
   }, []);
@@ -43,6 +49,9 @@ export function useRanking() {
       if (!ativo) return;
       setResultados(admin.resultados);
       setCampeoReal(admin.campeoReal);
+      setViceCampeaoReal(admin.viceCampeaoReal || "");
+      setArtilheiroRealNome(admin.artilheiroRealNome || "");
+      setArtilheiroRealSelecao(admin.artilheiroRealSelecao || "");
       const cfg = await getConfig();
       if (ativo) setConfigLocal(cfg);
     }
@@ -59,10 +68,13 @@ export function useRanking() {
     return () => clearInterval(id);
   }, [config.api_url, autoFetchResultados]);
 
-  const updateResultados = useCallback((novos, novoCampeo) => {
+  const updateResultados = useCallback((novos, novoCampeo, novoVice, novoArtNome, novoArtSel) => {
     setResultados(novos);
     setCampeoReal(novoCampeo);
+    if (novoVice !== undefined) setViceCampeaoReal(novoVice);
+    if (novoArtNome !== undefined) setArtilheiroRealNome(novoArtNome);
+    if (novoArtSel !== undefined) setArtilheiroRealSelecao(novoArtSel);
   }, []);
 
-  return { resultados, campeoReal, config, updateResultados, loadData, ultimaAtualizacao };
+  return { resultados, campeoReal, viceCampeaoReal, artilheiroRealNome, artilheiroRealSelecao, config, updateResultados, loadData, ultimaAtualizacao };
 }

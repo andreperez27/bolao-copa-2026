@@ -13,6 +13,9 @@ export function AdminPanel({
   cartelas,
   resultados,
   campeoReal,
+  viceCampeaoReal,
+  artilheiroRealNome,
+  artilheiroRealSelecao,
   onValidarCartela,
   onResultadosChange,
   ultimaAtualizacao,
@@ -21,6 +24,9 @@ export function AdminPanel({
   const [abaAdmin, setAbaAdmin] = useState("validar");
   const [resultadosEdit, setResultadosEdit] = useState(resultados || {});
   const [campeoRealEdit, setCampeoRealEdit] = useState(campeoReal || "");
+  const [viceCampeaoRealEdit, setViceCampeaoRealEdit] = useState(viceCampeaoReal || "");
+  const [artilheiroRealNomeEdit, setArtilheiroRealNomeEdit] = useState(artilheiroRealNome || "");
+  const [artilheiroRealSelecaoEdit, setArtilheiroRealSelecaoEdit] = useState(artilheiroRealSelecao || "");
   const [jogoSelecionado, setJogoSelecionado] = useState("");
   const [participantes, setParticipantes] = useState([]);
   const [carregandoPart, setCarregandoPart] = useState(false);
@@ -35,6 +41,9 @@ export function AdminPanel({
 
   useEffect(() => { setResultadosEdit(resultados || {}); }, [resultados]);
   useEffect(() => { setCampeoRealEdit(campeoReal || ""); }, [campeoReal]);
+  useEffect(() => { setViceCampeaoRealEdit(viceCampeaoReal || ""); }, [viceCampeaoReal]);
+  useEffect(() => { setArtilheiroRealNomeEdit(artilheiroRealNome || ""); }, [artilheiroRealNome]);
+  useEffect(() => { setArtilheiroRealSelecaoEdit(artilheiroRealSelecao || ""); }, [artilheiroRealSelecao]);
   useEffect(() => {
     getConfig().then((cfg) => {
       setValorAposta(cfg.valor_aposta);
@@ -72,10 +81,10 @@ export function AdminPanel({
         [jogoId]: { placar_a: Number(ga), placar_b: Number(gb) },
       };
       setResultadosEdit(atualizado);
-      onResultadosChange(atualizado, campeoRealEdit);
-      salvarAdminData(atualizado, campeoRealEdit).catch(() => {});
+      onResultadosChange(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
+      salvarAdminData(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit).catch(() => {});
     },
-    [resultadosEdit, campeoRealEdit, onResultadosChange]
+    [resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit, onResultadosChange]
   );
 
   const handleBuscarResultados = useCallback(async () => {
@@ -89,8 +98,8 @@ export function AdminPanel({
       if (count > 0) {
         const mergeados = { ...resultadosEdit, ...novos };
         setResultadosEdit(mergeados);
-        onResultadosChange(mergeados, campeoRealEdit);
-        await salvarAdminData(mergeados, campeoRealEdit);
+        onResultadosChange(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
+        await salvarAdminData(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
         setMsgBusca(`${count} resultado(s) atualizado(s)!`);
       } else {
         setMsgBusca("Nenhum resultado novo encontrado. Verifique se a API retorna jogos finalizados.");
@@ -99,7 +108,7 @@ export function AdminPanel({
       setMsgBusca("Erro: " + e.message + ". Tente inserir manualmente.");
     }
     setBuscando(false);
-  }, [apiUrl, resultadosEdit, campeoRealEdit, onResultadosChange]);
+  }, [apiUrl, resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit, onResultadosChange]);
 
   const handleSalvarConfig = async () => {
     try {
@@ -257,13 +266,14 @@ export function AdminPanel({
             </div>
           )}
           <div style={{ marginBottom: 12 }}>
-            <div style={{ color: "#8B9CC8", fontSize: 13, marginBottom: 6 }}>Campeão real</div>
+            <div style={{ color: "#FFD700", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Campeão real</div>
             <select
               value={campeoRealEdit}
               onChange={(e) => {
-                setCampeoRealEdit(e.target.value);
-                onResultadosChange(resultadosEdit, e.target.value);
-                salvarAdminData(resultadosEdit, e.target.value).catch(() => {});
+                const v = e.target.value;
+                setCampeoRealEdit(v);
+                onResultadosChange(resultadosEdit, v, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
+                salvarAdminData(resultadosEdit, v, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit).catch(() => {});
               }}
               style={{
                 width: "100%",
@@ -277,6 +287,88 @@ export function AdminPanel({
               }}
             >
               <option value="">Ainda não definido</option>
+              {TODOS_TIMES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ color: "#C0C0C0", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Vice-campeão real</div>
+            <select
+              value={viceCampeaoRealEdit}
+              onChange={(e) => {
+                const v = e.target.value;
+                setViceCampeaoRealEdit(v);
+                onResultadosChange(resultadosEdit, campeoRealEdit, v, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
+                salvarAdminData(resultadosEdit, campeoRealEdit, v, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit).catch(() => {});
+              }}
+              style={{
+                width: "100%",
+                background: "#1a2234",
+                border: "2px solid #C0C0C0",
+                borderRadius: 8,
+                color: "#C0C0C0",
+                padding: "8px 12px",
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              <option value="">Ainda não definido</option>
+              {TODOS_TIMES.filter((t) => t !== campeoRealEdit).map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ color: "#FFD700", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Artilheiro real</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+              <input
+                value={artilheiroRealNomeEdit}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setArtilheiroRealNomeEdit(v);
+                  onResultadosChange(resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, v, artilheiroRealSelecaoEdit);
+                  salvarAdminData(resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, v, artilheiroRealSelecaoEdit).catch(() => {});
+                }}
+                placeholder="Nome do artilheiro"
+                style={{
+                  flex: 1,
+                  background: "#1a2234",
+                  border: "2px solid #FFD700",
+                  borderRadius: 8,
+                  color: "#FFD700",
+                  padding: "8px 12px",
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              />
+            </div>
+            <select
+              value={artilheiroRealSelecaoEdit}
+              onChange={(e) => {
+                const v = e.target.value;
+                setArtilheiroRealSelecaoEdit(v);
+                onResultadosChange(resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, v);
+                salvarAdminData(resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, v).catch(() => {});
+              }}
+              style={{
+                width: "100%",
+                background: "#1a2234",
+                border: "2px solid #FFD700",
+                borderRadius: 8,
+                color: "#FFD700",
+                padding: "8px 12px",
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              <option value="">Seleção do artilheiro...</option>
               {TODOS_TIMES.map((t) => (
                 <option key={t} value={t}>
                   {t}

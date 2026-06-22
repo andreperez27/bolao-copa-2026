@@ -5,7 +5,7 @@ import { useCartelas } from "./hooks/useCartelas";
 import { useRanking } from "./hooks/useRanking";
 import { salvarAdminData } from "./services/admin";
 import { getFaseAtual } from "./utils/pontuacao";
-import { deletarCartela } from "./services/cartelas";
+import { deletarCartela, listCartelasAtivas } from "./services/cartelas";
 import { deletarJogador } from "./services/jogadores";
 import Login from "./pages/Login";
 import MinhasCartelas from "./pages/MinhasCartelas";
@@ -21,7 +21,7 @@ export default function App() {
   const location = useLocation();
   const { user, jogador, isAdmin, signOut, refreshJogador, refreshUser } = useAuth();
   const { cartelas, refresh: refreshCartelas, salvar: salvarCartelaHook, deletar, validar } = useCartelas();
-  const { resultados, campeoReal, config, updateResultados, loadData, ultimaAtualizacao } = useRanking();
+  const { resultados, campeoReal, viceCampeaoReal, artilheiroRealNome, artilheiroRealSelecao, config, updateResultados, loadData, ultimaAtualizacao } = useRanking();
 
   const [cartelaEditando, setCartelaEditando] = useState(null);
   const [cartelaPrint, setCartelaPrint] = useState(null);
@@ -96,9 +96,9 @@ export default function App() {
   );
 
   const handleResultadosChange = useCallback(
-    (novosResultados, novoCampeo) => {
-      updateResultados(novosResultados, novoCampeo);
-      salvarAdminData(novosResultados, novoCampeo).catch(() => {});
+    (novosResultados, novoCampeo, novoVice, novoArtNome, novoArtSel) => {
+      updateResultados(novosResultados, novoCampeo, novoVice, novoArtNome, novoArtSel);
+      salvarAdminData(novosResultados, novoCampeo, novoVice, novoArtNome, novoArtSel).catch(() => {});
     },
     [updateResultados]
   );
@@ -106,6 +106,33 @@ export default function App() {
   const handlePrintCartela = useCallback((cartela) => {
     setCartelaPrint(cartela);
   }, []);
+
+  const handleNovaCartela = useCallback(async () => {
+    const nome = jogador?.nome || user?.nome || "";
+    if (!nome) return;
+    try {
+      const ativas = await listCartelasAtivas("", nome);
+      if (ativas.length > 0) {
+        if (!window.confirm(
+          `Você já possui uma cartela ativa (${ativas[0].nome || "sem nome"}).\n\n` +
+          `Deseja editá-la? Se criar uma nova, a atual será arquivada.`
+        )) return;
+        if (window.confirm(`Criar nova cartela (a atual será arquivada)?`)) {
+          setCartelaEditando(null);
+          navigate("/preencher-cartela");
+        } else {
+          setCartelaEditando(ativas[0]);
+          navigate("/preencher-cartela");
+        }
+      } else {
+        setCartelaEditando(null);
+        navigate("/preencher-cartela");
+      }
+    } catch {
+      setCartelaEditando(null);
+      navigate("/preencher-cartela");
+    }
+  }, [jogador, user, navigate, setCartelaEditando]);
 
   const handleImportarCartela = useCallback(
     async (file) => {
@@ -162,10 +189,7 @@ export default function App() {
                 config={config}
                 resultados={resultados}
                 onRefreshCartelas={refreshCartelas}
-                onNovaCartela={() => {
-                  setCartelaEditando(null);
-                  navigate("/preencher-cartela");
-                }}
+                onNovaCartela={handleNovaCartela}
                 onVerCartela={(c) => {
                   setCartelaEditando(c);
                   navigate("/preencher-cartela");
@@ -208,6 +232,9 @@ export default function App() {
               cartelas={atualCartelas}
               resultados={resultados}
               campeoReal={campeoReal}
+              viceCampeaoReal={viceCampeaoReal}
+              artilheiroRealNome={artilheiroRealNome}
+              artilheiroRealSelecao={artilheiroRealSelecao}
               isAdmin={isAdmin}
               config={config}
               ultimaAtualizacao={ultimaAtualizacao}

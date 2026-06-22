@@ -52,6 +52,19 @@ export function pontosCampeaoPorFase(fase) {
   return mapa[fase] || 20;
 }
 
+export function pontosViceCampeaoPorFase(fase) {
+  const mapa = { grupos: 15, "1_16": 14, oitavas: 11, quartas: 8, semi: 4, final: 2 };
+  return mapa[fase] || 15;
+}
+
+export function pontosArtilheiro() {
+  return 15;
+}
+
+export function bonusCombo() {
+  return 25;
+}
+
 export function contarEmpatesPalpitados(palpites) {
   if (!palpites) return 0;
   return Object.entries(palpites).filter(([k, v]) => {
@@ -60,17 +73,39 @@ export function contarEmpatesPalpitados(palpites) {
   }).length;
 }
 
-export function calcularPontosCartela(palpites, resultados, campeao, campeaoFase, campeoReal) {
+export function calcularPontosCartela(
+  palpites, resultados, campeao, campeaoFase, campeoReal,
+  viceCampeao, viceCampeaoReal, artilheiroNome, artilheiroSelecao,
+  artilheiroRealNome, artilheiroRealSelecao
+) {
   let total = 0;
   if (!palpites) return total;
+
   for (const jogoId in palpites) {
     if (jogoId === "__campeo") continue;
     const resultado = resultados && resultados[jogoId];
     const { pts } = calcularPontos(palpites[jogoId], resultado);
     total += pts;
   }
+
   if (campeoReal && campeao === campeoReal) {
     total += pontosCampeaoPorFase(campeaoFase || "grupos");
   }
+
+  if (viceCampeaoReal && viceCampeao === viceCampeaoReal) {
+    total += pontosViceCampeaoPorFase(campeaoFase || "grupos");
+  }
+
+  if (artilheiroRealNome && artilheiroNome === artilheiroRealNome &&
+      artilheiroNome && (!artilheiroRealSelecao || artilheiroSelecao === artilheiroRealSelecao)) {
+    total += pontosArtilheiro();
+  }
+
+  if (campeoReal && campeao === campeoReal &&
+      viceCampeaoReal && viceCampeao === viceCampeaoReal &&
+      artilheiroRealNome && artilheiroNome === artilheiroRealNome) {
+    total += bonusCombo();
+  }
+
   return total;
 }

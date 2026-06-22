@@ -8,6 +8,15 @@ export async function listCartelas(grupoId) {
   return await res.json() || [];
 }
 
+export async function listCartelasAtivas(grupoId, participante) {
+  let url = `/rest/v1/cartelas?select=*&deleted_at=is.null&ativa=eq.true&participante=eq.${encodeURIComponent(participante)}`;
+  if (grupoId) url += "&grupo_id=eq." + encodeURIComponent(grupoId);
+  const res = await supabaseFetch(url);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
 export async function salvarCartela(cartela) {
   const res = await supabaseFetch("/rest/v1/cartelas", {
     method: "POST",
@@ -19,9 +28,13 @@ export async function salvarCartela(cartela) {
       palpites: cartela.palpites || {},
       campeao: cartela.campeao || "",
       campeao_fase: cartela.campeao_fase || "grupos",
+      palpite_vice_campeao: cartela.palpite_vice_campeao || "",
+      palpite_artilheiro_nome: cartela.palpite_artilheiro_nome || "",
+      palpite_artilheiro_selecao: cartela.palpite_artilheiro_selecao || "",
       status: cartela.status || "aguardando",
       valor_pago: cartela.valor_pago || 20,
       grupo_id: cartela.grupo_id || '00000000-0000-0000-0000-000000000000',
+      ativa: true,
       created_at: cartela.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }),

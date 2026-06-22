@@ -5,13 +5,16 @@ import { StatusBadge } from "../components/StatusBadge";
 import { PainelFinanceiro } from "../components/PainelFinanceiro";
 import { AdminPanel } from "../components/AdminPanel";
 import { LegendaDesempate } from "../components/LegendaDesempate";
-import { calcularPontos, pontosCampeaoPorFase } from "../utils/pontuacao";
+import { calcularPontos, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
 import { NOMES_IA } from "../services/ia";
 
 export default function Ranking({
   cartelas,
   resultados,
   campeoReal,
+  viceCampeaoReal,
+  artilheiroRealNome,
+  artilheiroRealSelecao,
   isAdmin,
   config,
   ultimaAtualizacao,
@@ -24,95 +27,69 @@ export default function Ranking({
 }) {
   const medalhas = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
 
-  const ranking = Object.values(
-    cartelas.filter((c) => !NOMES_IA.includes(c.participante)).reduce((acc, c) => {
-      let pts = 0;
-      let total = 0;
-      let acertos = 0;
-      let placaresExatos = 0;
-      let diferencasCertas = 0;
-      let vencedoresCertos = 0;
-      let empatesPalpitados = 0;
-      for (const [k, v] of Object.entries(c.palpites || {})) {
-        if (k === "__campeo") continue;
-        total++;
-        const r = resultados[k];
-        const { pts: pt, tipo } = calcularPontos(v, r);
-        pts += pt;
-        if (tipo !== "errou" && tipo !== "pendente") acertos++;
-        if (tipo === "placar_exato")    placaresExatos++;
-        if (tipo === "diferenca_certa") diferencasCertas++;
-        if (tipo === "vencedor_certo")  vencedoresCertos++;
-        if (v?.gols_a !== undefined && v.gols_a === v.gols_b) empatesPalpitados++;
-      }
-      if (campeoReal && c.campeao === campeoReal) {
-        pts += pontosCampeaoPorFase(c.campeao_fase || "grupos");
-      }
-      pts += Number(config?.bonus_geral) || 0;
-      const existente = acc[c.participante];
-      if (!existente || pts > existente.pts) {
-        acc[c.participante] = {
-          ...c, pts, total, acertos,
-          placaresExatos, diferencasCertas,
-          vencedoresCertos, empatesPalpitados,
-        };
-      }
-      return acc;
-    }, {})
-  ).sort((a, b) => {
-    if (b.pts !== a.pts)                           return b.pts - a.pts;
-    if (b.placaresExatos !== a.placaresExatos)     return b.placaresExatos - a.placaresExatos;
-    if (b.diferencasCertas !== a.diferencasCertas) return b.diferencasCertas - a.diferencasCertas;
-    if (b.vencedoresCertos !== a.vencedoresCertos) return b.vencedoresCertos - a.vencedoresCertos;
-    if (a.empatesPalpitados !== b.empatesPalpitados) return a.empatesPalpitados - b.empatesPalpitados;
-    if (b.acertos !== a.acertos)                   return b.acertos - a.acertos;
-    return (a.participante || "").localeCompare(b.participante || "", "pt-BR");
-  });
+  function calcularComBonus(c) {
+    let pts = 0;
+    let total = 0;
+    let acertos = 0;
+    let placaresExatos = 0;
+    let diferencasCertas = 0;
+    let vencedoresCertos = 0;
+    let empatesPalpitados = 0;
+    for (const [k, v] of Object.entries(c.palpites || {})) {
+      if (k === "__campeo") continue;
+      total++;
+      const r = resultados[k];
+      const { pts: pt, tipo } = calcularPontos(v, r);
+      pts += pt;
+      if (tipo !== "errou" && tipo !== "pendente") acertos++;
+      if (tipo === "placar_exato")    placaresExatos++;
+      if (tipo === "diferenca_certa") diferencasCertas++;
+      if (tipo === "vencedor_certo")  vencedoresCertos++;
+      if (v?.gols_a !== undefined && v.gols_a === v.gols_b) empatesPalpitados++;
+    }
+    if (campeoReal && c.campeao === campeoReal) {
+      pts += pontosCampeaoPorFase(c.campeao_fase || "grupos");
+    }
+    if (viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal) {
+      pts += pontosViceCampeaoPorFase(c.campeao_fase || "grupos");
+    }
+    if (artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome &&
+        c.palpite_artilheiro_nome && (!artilheiroRealSelecao || c.palpite_artilheiro_selecao === artilheiroRealSelecao)) {
+      pts += pontosArtilheiro();
+    }
+    if (campeoReal && c.campeao === campeoReal &&
+        viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal &&
+        artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome) {
+      pts += bonusCombo();
+    }
+    pts += Number(config?.bonus_geral) || 0;
+    return { pts, total, acertos, placaresExatos, diferencasCertas, vencedoresCertos, empatesPalpitados };
+  }
 
-  const iasNoRanking = Object.values(
-    cartelas.filter((c) => NOMES_IA.includes(c.participante)).reduce((acc, c) => {
-      let pts = 0;
-      let total = 0;
-      let acertos = 0;
-      let placaresExatos = 0;
-      let diferencasCertas = 0;
-      let vencedoresCertos = 0;
-      let empatesPalpitados = 0;
-      for (const [k, v] of Object.entries(c.palpites || {})) {
-        if (k === "__campeo") continue;
-        total++;
-        const r = resultados[k];
-        const { pts: pt, tipo } = calcularPontos(v, r);
-        pts += pt;
-        if (tipo !== "errou" && tipo !== "pendente") acertos++;
-        if (tipo === "placar_exato")    placaresExatos++;
-        if (tipo === "diferenca_certa") diferencasCertas++;
-        if (tipo === "vencedor_certo")  vencedoresCertos++;
-        if (v?.gols_a !== undefined && v.gols_a === v.gols_b) empatesPalpitados++;
-      }
-      if (campeoReal && c.campeao === campeoReal) {
-        pts += pontosCampeaoPorFase(c.campeao_fase || "grupos");
-      }
-      pts += Number(config?.bonus_geral) || 0;
-      const existente = acc[c.participante];
-      if (!existente || pts > existente.pts) {
-        acc[c.participante] = {
-          ...c, pts, total, acertos,
-          placaresExatos, diferencasCertas,
-          vencedoresCertos, empatesPalpitados,
-        };
-      }
-      return acc;
-    }, {})
-  ).sort((a, b) => {
-    if (b.pts !== a.pts)                           return b.pts - a.pts;
-    if (b.placaresExatos !== a.placaresExatos)     return b.placaresExatos - a.placaresExatos;
-    if (b.diferencasCertas !== a.diferencasCertas) return b.diferencasCertas - a.diferencasCertas;
-    if (b.vencedoresCertos !== a.vencedoresCertos) return b.vencedoresCertos - a.vencedoresCertos;
-    if (a.empatesPalpitados !== b.empatesPalpitados) return a.empatesPalpitados - b.empatesPalpitados;
-    if (b.acertos !== a.acertos)                   return b.acertos - a.acertos;
-    return (a.participante || "").localeCompare(b.participante || "", "pt-BR");
-  });
+  function construirRanking(filtroIA) {
+    return Object.values(
+      cartelas.filter((c) => filtroIA ? NOMES_IA.includes(c.participante) : !NOMES_IA.includes(c.participante))
+        .reduce((acc, c) => {
+          const calc = calcularComBonus(c);
+          const existente = acc[c.participante];
+          if (!existente || calc.pts > existente.pts) {
+            acc[c.participante] = { ...c, ...calc };
+          }
+          return acc;
+        }, {})
+    ).sort((a, b) => {
+      if (b.pts !== a.pts)                           return b.pts - a.pts;
+      if (b.placaresExatos !== a.placaresExatos)     return b.placaresExatos - a.placaresExatos;
+      if (b.diferencasCertas !== a.diferencasCertas) return b.diferencasCertas - a.diferencasCertas;
+      if (b.vencedoresCertos !== a.vencedoresCertos) return b.vencedoresCertos - a.vencedoresCertos;
+      if (a.empatesPalpitados !== b.empatesPalpitados) return a.empatesPalpitados - b.empatesPalpitados;
+      if (b.acertos !== a.acertos)                   return b.acertos - a.acertos;
+      return (a.participante || "").localeCompare(b.participante || "", "pt-BR");
+    });
+  }
+
+  const ranking = construirRanking(false);
+  const iasNoRanking = construirRanking(true);
 
   const primeiro = ranking[0] || null;
   const segundo = ranking[1] || null;
@@ -306,18 +283,29 @@ export default function Ranking({
                   {c.acertos}/{c.total} acertos{" "}
                   {c.placaresExatos > 0 && (
                     <span style={{ color: "#FFD700", fontWeight: 700 }}>
-                      · 🎯 {c.placaresExatos} exatos
+                      {" \u00B7 "}\uD83C\uDFAF {c.placaresExatos} exatos
                     </span>
                   )}
                   {c.empatesPalpitados > 0 && (
                     <span style={{ color: "#8B9CC8" }}>
-                      {" "}· ={c.empatesPalpitados} empates apostados
+                      {" "}\u00B7 ={c.empatesPalpitados} empates apostados
                     </span>
                   )}
-                  {" "}· Campeão: {c.campeao || "—"}{" "}
+                  {" \u00B7 "}Campe\u00e3o: {c.campeao || "\u2014"}{" "}
                   {c.campeao === campeoReal && campeoReal
                     ? "\u2705 +" + pontosCampeaoPorFase(c.campeao_fase || "grupos")
                     : ""}
+                  {viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal && (
+                    <span style={{ color: "#C0C0C0" }}> \u2022 Vice \u2705</span>
+                  )}
+                  {artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome && (
+                    <span style={{ color: "#FFD700" }}> \u2022 Artilheiro \u2705</span>
+                  )}
+                  {campeoReal && c.campeao === campeoReal &&
+                   viceCampeaoReal && c.palpite_vice_campeao === viceCampeaoReal &&
+                   artilheiroRealNome && c.palpite_artilheiro_nome === artilheiroRealNome && (
+                    <span style={{ color: "#16a34a", fontWeight: 700 }}> \u2022 Combo! +{bonusCombo()}</span>
+                  )}
                   <span style={{ marginLeft: 6 }}>
                     <StatusBadge status={c.status} />
                   </span>
@@ -353,6 +341,9 @@ export default function Ranking({
           cartelas={cartelas}
           resultados={resultados}
           campeoReal={campeoReal}
+          viceCampeaoReal={viceCampeaoReal}
+          artilheiroRealNome={artilheiroRealNome}
+          artilheiroRealSelecao={artilheiroRealSelecao}
           isAdmin={isAdmin}
           ultimaAtualizacao={ultimaAtualizacao}
           onValidarCartela={onValidarCartela}
