@@ -129,9 +129,14 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
 
   const handleSalvar = () => {
     const palpitesFiltrados = { ...(cartela?.palpites || {}) };
+    const gamesMap = {};
+    for (const fase of ["Grupo A","Grupo B","Grupo C","Grupo D","Grupo E","Grupo F","Grupo G","Grupo H","Grupo I","Grupo J","Grupo K","Grupo L","Segunda Rodada","Oitavas","Quartas","Semi","Final"]) {
+      for (const j of jogosPorGrupo(fase)) gamesMap[j.id] = j;
+    }
     for (const [jogoId, valor] of Object.entries(palpites)) {
-      const jogo = JOGOS_TODOS.find((j) => j.id === jogoId);
-      if (!jogo || !isJogoBloqueado(jogo)) {
+      const jogo = gamesMap[jogoId] || JOGOS_TODOS.find((j) => j.id === jogoId);
+      const blocked = jogo?._unlocked === false || (jogo && isJogoBloqueado(jogo));
+      if (!blocked) {
         palpitesFiltrados[jogoId] = valor;
       }
     }
