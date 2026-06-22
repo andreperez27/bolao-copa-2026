@@ -97,6 +97,7 @@ export function JogoCard({ jogo, palpite, resultado, onChange, disabled }) {
         <div style={{ flex: 1, textAlign: "center" }}>
           <Flag pais={jogo.time_a} size={28} />
           <div style={{ color: "#F0F4FF", fontSize: 13, fontWeight: 700, marginTop: 4 }}>{jogo.time_a}</div>
+          {jogo.time_a_label && <div style={{ color: "#8B9CC8", fontSize: 10, fontWeight: 600, marginTop: 1 }}>{jogo.time_a_label}</div>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <input
@@ -146,6 +147,7 @@ export function JogoCard({ jogo, palpite, resultado, onChange, disabled }) {
         <div style={{ flex: 1, textAlign: "center" }}>
           <Flag pais={jogo.time_b} size={28} />
           <div style={{ color: "#F0F4FF", fontSize: 13, fontWeight: 700, marginTop: 4 }}>{jogo.time_b}</div>
+          {jogo.time_b_label && <div style={{ color: "#8B9CC8", fontSize: 10, fontWeight: 600, marginTop: 1 }}>{jogo.time_b_label}</div>}
         </div>
       </div>
 

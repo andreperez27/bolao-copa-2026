@@ -170,16 +170,22 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
         const unlocked = m.type === "A"
           ? !!(t1?.time && t2?.time)
           : !!(t1?.confirmed && t2?.confirmed && allGroupsFinished(resultadosR));
+        const posA = m.slot1.pos === 1 ? "1º" : m.slot1.pos === 2 ? "2º" : "3º";
+        const posB = m.slot2.pos === 1 ? "1º" : m.slot2.pos === 2 ? "2º" : "3º";
+        const grupoLabelA = m.slot1.grupo.replace("3", "");
+        const grupoLabelB = m.slot2.grupo.replace("3", "");
         resolved[m.id] = {
-          time_a: t1?.time || (m.type === "A" ? `1º ${m.slot1.grupo}` : `3º ${m.slot1.grupo.replace("3", "")}`),
-          time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : `3º ${m.slot2.grupo.replace("3", "")}`),
+          time_a: t1?.time || (m.type === "A" ? `1º ${m.slot1.grupo}` : `3º ${grupoLabelA}`),
+          time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : `3º ${grupoLabelB}`),
+          time_a_label: `${posA} ${grupoLabelA}`,
+          time_b_label: `${posB} ${grupoLabelB}`,
           unlocked,
         };
       }
       return JOGOS_1_16.map(j => {
         const r = resolved[j.id];
         if (!r) return j;
-        return { ...j, time_a: r.time_a, time_b: r.time_b, _unlocked: r.unlocked };
+        return { ...j, time_a: r.time_a, time_b: r.time_b, time_a_label: r.time_a_label, time_b_label: r.time_b_label, _unlocked: r.unlocked };
       });
     }
     if (grupo === "Oitavas") {
