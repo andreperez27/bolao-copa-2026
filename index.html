@@ -12,6 +12,15 @@
   <meta name="description" content="Bolão da Copa do Mundo 2026 — Faça seus palpites!" />
   <link rel="apple-touch-icon" href="%BASE_URL%icons/192.png" />
   <link rel="icon" type="image/x-icon" href="%BASE_URL%icons/192.png" />
+  <script>
+    (function() {
+      var redirect = sessionStorage.getItem('redirect');
+      if (redirect) {
+        sessionStorage.removeItem('redirect');
+        history.replaceState(null, '', redirect);
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="root"></div>
