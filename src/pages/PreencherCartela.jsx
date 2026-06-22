@@ -13,7 +13,8 @@ import {
   TODOS_TIMES,
 } from "../services/jogos";
 import { getFaseAtual, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
-import { getKnockoutState } from "../utils/knockout";
+import { calcularGrupo } from "../utils/standings";
+import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING } from "../utils/bracketMapping";
 import { isJogoBloqueado } from "../utils/datas";
 import { listarCartelasIA } from "../services/ia";
 import SugestoesIA from "../components/SugestoesIA";
@@ -41,7 +42,11 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   const [campeaoTravado, setCampeaoTravado] = useState(false);
 
   const faseAtual = getFaseAtual(resultados);
-const knockoutState = React.useMemo(() => getKnockoutState(resultados || {}), [resultados]);
+  const LETRAS = React.useMemo(() => Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i)), []);
+  const standings = React.useMemo(() => {
+    try { return LETRAS.map(letra => ({ grupo: letra, times: calcularGrupo(letra, resultados || {}) })); }
+    catch { return []; }
+  }, [resultados, LETRAS]);
 
   useEffect(() => {
     listarCartelasIA().then(setIaCartelas).catch(() => {});
@@ -150,43 +155,46 @@ const knockoutState = React.useMemo(() => getKnockoutState(resultados || {}), [r
   const jogosPorGrupo = (grupo) => {
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
     if (grupo === "Segunda Rodada") {
-      const resolved = knockoutState.r32.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
+      const resultadosR = resultados || {};
+      const resolved = {};
+      for (const m of R32_MAPPING) {
+        const grupo1 = standings.find(s => s.grupo === m.slot1.grupo);
+        const grupo2 = standings.find(s => s.grupo === m.slot2.grupo);
+        const t1 = grupo1?.times?.[m.slot1.pos - 1];
+        const t2 = grupo2?.times?.[m.slot2.pos - 1];
+        const confirmed = (t1?.confirmed && t2?.confirmed) || false;
+        resolved[m.id] = {
+          time_a: t1?.time || (m.type === "A" ? `1º ${m.slot1.grupo}` : `3º ${m.slot1.grupo.replace("3", "")}`),
+          time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : `3º ${m.slot2.grupo.replace("3", "")}`),
+          unlocked: confirmed,
+        };
+      }
       return JOGOS_1_16.map(j => {
-        const m = resolved[j.id];
-        if (!m) return j;
-        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+        const r = resolved[j.id];
+        if (!r) return j;
+        return { ...j, time_a: r.time_a, time_b: r.time_b, _unlocked: r.unlocked };
       });
     }
     if (grupo === "Oitavas") {
-      const resolved = knockoutState.oitavas.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
       return JOGOS_OITAVAS.map(j => {
-        const m = resolved[j.id];
-        if (!m) return j;
-        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+        const res = resultadosR?.[j.id];
+        const hasResult = res?.placar_a != null;
+        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
       });
     }
     if (grupo === "Quartas") {
-      const resolved = knockoutState.quartas.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
       return JOGOS_QUARTAS.map(j => {
-        const m = resolved[j.id];
-        if (!m) return j;
-        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
       });
     }
     if (grupo === "Semi") {
-      const resolved = knockoutState.semis.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
       return JOGOS_SEMI.map(j => {
-        const m = resolved[j.id];
-        if (!m) return j;
-        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
       });
     }
     if (grupo === "Final") {
-      const resolved = knockoutState.final.reduce((acc, m) => { acc[m.id] = m; return acc; }, {});
       return JOGOS_FINAL.map(j => {
-        const m = resolved[j.id];
-        if (!m) return j;
-        return { ...j, time_a: m.team1 || m.placeholder1 || j.time_a, time_b: m.team2 || m.placeholder2 || j.time_b, _unlocked: m.unlocked };
+        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
       });
     }
     return [];
