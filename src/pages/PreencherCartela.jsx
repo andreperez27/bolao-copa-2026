@@ -14,7 +14,8 @@ import {
 } from "../services/jogos";
 import { getFaseAtual, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
 import { calcularGrupo, allGroupsFinished } from "../utils/standings";
-import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING } from "../utils/bracketMapping";
+import { calculateThirdPlaceRanking, getThirdPlaceSlots } from "../utils/thirdPlace";
+import { R32_MAPPING } from "../utils/bracketMapping";
 import { isJogoBloqueado } from "../utils/datas";
 import { listarCartelasIA } from "../services/ia";
 import SugestoesIA from "../components/SugestoesIA";
@@ -161,24 +162,44 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     const resultadosR = resultados || {};
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
     if (grupo === "Segunda Rodada") {
+      const groupsFinished = allGroupsFinished(resultadosR);
+      const thirdSlots = groupsFinished ? getThirdPlaceSlots(resultadosR) : [];
       const resolved = {};
+      const usedThird = new Set();
       for (const m of R32_MAPPING) {
-        const grupo1 = standings.find(s => s.grupo === m.slot1.grupo);
-        const grupo2 = standings.find(s => s.grupo === m.slot2.grupo);
-        const t1 = grupo1?.times?.[m.slot1.pos - 1];
-        const t2 = grupo2?.times?.[m.slot2.pos - 1];
+        let t1 = null, t2 = null;
+        let labelA = "", labelB = "";
+        if (m.type === "A") {
+          const g1 = standings.find(s => s.grupo === m.slot1.grupo);
+          const g2 = standings.find(s => s.grupo === m.slot2.grupo);
+          t1 = g1?.times?.[m.slot1.pos - 1];
+          t2 = g2?.times?.[m.slot2.pos - 1];
+          labelA = `${m.slot1.pos === 1 ? "1º" : "2º"} ${m.slot1.grupo}`;
+          labelB = `${m.slot2.pos === 1 ? "1º" : "2º"} ${m.slot2.grupo}`;
+        } else {
+          const g1 = standings.find(s => s.grupo === m.slot1.grupo);
+          t1 = g1?.times?.[m.slot1.pos - 1];
+          labelA = `1º ${m.slot1.grupo}`;
+          if (thirdSlots.length) {
+            const eligible = thirdSlots
+              .filter(t => m.slot2.pool.includes(t.grupo) && !usedThird.has(t.grupo))
+              .sort((a, b) => a.rank - b.rank);
+            if (eligible.length) {
+              t2 = { time: eligible[0].time };
+              labelB = `3º ${eligible[0].grupo}`;
+              usedThird.add(eligible[0].grupo);
+            }
+          }
+          if (!t2) labelB = "3º x";
+        }
         const unlocked = m.type === "A"
           ? !!(t1?.time && t2?.time)
-          : !!(t1?.confirmed && t2?.confirmed && allGroupsFinished(resultadosR));
-        const posA = m.slot1.pos === 1 ? "1º" : m.slot1.pos === 2 ? "2º" : "3º";
-        const posB = m.slot2.pos === 1 ? "1º" : m.slot2.pos === 2 ? "2º" : "3º";
-        const grupoLabelA = m.slot1.grupo.replace("3", "");
-        const grupoLabelB = m.slot2.grupo.replace("3", "");
+          : !!(t1?.confirmed && t2 && groupsFinished);
         resolved[m.id] = {
-          time_a: t1?.time || (m.type === "A" ? `1º ${m.slot1.grupo}` : `3º ${grupoLabelA}`),
-          time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : `3º ${grupoLabelB}`),
-          time_a_label: `${posA} ${grupoLabelA}`,
-          time_b_label: `${posB} ${grupoLabelB}`,
+          time_a: t1?.time || `1º ${m.slot1.grupo || ""}`,
+          time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : "3º x"),
+          time_a_label: labelA,
+          time_b_label: labelB,
           unlocked,
         };
       }

@@ -5,16 +5,35 @@ import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPP
 function getGroupTeam(grupo, pos, standings) {
   const groupData = standings.find(s => s.grupo === grupo);
   if (!groupData) return null;
-  const team = groupData.times.find(t => t.position === pos);
-  return team || null;
+  return groupData.times.find(t => t.position === pos) || null;
 }
 
-function resolveThirdPlace(matchup, thirdSlots) {
-  const slotThirdGroups = [matchup.slot1.grupo.replace("3", ""), matchup.slot2.grupo.replace("3", "")];
-  const matched = thirdSlots.filter(t => slotThirdGroups.includes(t.grupo));
-  return matched.length >= 2
-    ? { team1: matched[0], team2: matched[1] }
-    : null;
+function resolveThirdPlacePool(pool, thirdSlots) {
+  if (!thirdSlots.length) return null;
+  const eligible = thirdSlots.filter(t => pool.includes(t.grupo));
+  if (!eligible.length) return null;
+  return eligible.sort((a, b) => a.rank - b.rank)[0];
+}
+
+function resolveThirdPlaceMatchup(slot1, slot2, thirdSlots) {
+  const pool1 = slot1.pool;
+  const pool2 = slot2.pool;
+  const used = new Set();
+  let team1 = null, team2 = null;
+
+  if (pool1) {
+    const eligible = thirdSlots.filter(t => pool1.includes(t.grupo) && !used.has(t.grupo));
+    const best = eligible.sort((a, b) => a.rank - b.rank)[0];
+    if (best) { team1 = best; used.add(best.grupo); }
+  }
+  if (pool2) {
+    const eligible = thirdSlots.filter(t => pool2.includes(t.grupo) && !used.has(t.grupo));
+    const best = eligible.sort((a, b) => a.rank - b.rank)[0];
+    if (best) { team2 = best; used.add(best.grupo); }
+  }
+
+  if (team1 && team2) return { team1, team2 };
+  return null;
 }
 
 function getMatchResult(matchId, resultados) {
@@ -45,17 +64,17 @@ export function getKnockoutState(resultados) {
       const t2 = getGroupTeam(m.slot2.grupo, m.slot2.pos, standings);
       if (t1) { team1 = t1.time; team1Confirmed = t1.confirmed; }
       if (t2) { team2 = t2.time; team2Confirmed = t2.confirmed; }
-      if (t1?.confirmed && t2?.confirmed) {
-        unlocked = true;
-      }
+      if (t1?.confirmed && t2?.confirmed) unlocked = true;
     } else {
-      const resolved = resolveThirdPlace(m, thirdSlots);
-      if (resolved && groupsFinished) {
-        team1 = resolved.team1.time;
-        team2 = resolved.team2.time;
-        team1Confirmed = true;
-        team2Confirmed = true;
-        unlocked = true;
+      if (groupsFinished && thirdSlots.length) {
+        const resolved = resolveThirdPlaceMatchup(m.slot1, m.slot2, thirdSlots);
+        if (resolved) {
+          team1 = resolved.team1.time;
+          team2 = resolved.team2.time;
+          team1Confirmed = true;
+          team2Confirmed = true;
+          unlocked = true;
+        }
       }
     }
 
@@ -63,8 +82,8 @@ export function getKnockoutState(resultados) {
 
     resolvedR32[m.id] = {
       id: m.id,
-      team1: team1 || `1º ${m.slot1.grupo}`,
-      team2: team2 || (m.type === "B" ? "3º a definir" : `2º ${m.slot2.grupo}`),
+      team1: team1 || (m.slot1.grupo ? `${m.slot1.pos}º ${m.slot1.grupo}` : "3º a definir"),
+      team2: team2 || (m.type === "A" ? `${m.slot2.pos}º ${m.slot2.grupo}` : "3º a definir"),
       team1Confirmed,
       team2Confirmed,
       unlocked,
@@ -74,7 +93,7 @@ export function getKnockoutState(resultados) {
     };
   }
 
-  function resolvePhase(mapping, prevPhase, phaseLabel) {
+  function resolvePhase(mapping, prevPhase, _phaseLabel) {
     const result = {};
     for (const m of mapping) {
       const team1Ref = m.slot1.match ? prevPhase[m.slot1.match] : null;
@@ -86,9 +105,6 @@ export function getKnockoutState(resultados) {
       const resolved = team1Ref?.winner && team2Ref?.winner;
       const unlocked = resolved;
 
-      const placeholder1 = `Vencedor ${m.slot1.match || ""}`;
-      const placeholder2 = `Vencedor ${m.slot2.match || ""}`;
-
       const res = getMatchResult(m.id, resultados);
       const matchWinner = res
         ? (res.winner === "team1" ? winner1 : winner2)
@@ -98,8 +114,8 @@ export function getKnockoutState(resultados) {
         id: m.id,
         team1: winner1,
         team2: winner2,
-        placeholder1,
-        placeholder2,
+        placeholder1: `Vencedor ${m.slot1.match || ""}`,
+        placeholder2: `Vencedor ${m.slot2.match || ""}`,
         team1Confirmed: !!winner1,
         team2Confirmed: !!winner2,
         unlocked,
