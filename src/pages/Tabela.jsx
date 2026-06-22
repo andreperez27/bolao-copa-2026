@@ -50,9 +50,10 @@ function GrupoCard({ nome, resultados }) {
       }
     });
 
+    let pendentes = 0;
+
     function localCalc(times, jogos, resultados) {
       const stats = Object.fromEntries(times.map(t => [t, { time: t, J: 0, V: 0, E: 0, D: 0, GP: 0, GC: 0, SG: 0, PTS: 0, position: 0, confirmed: false, status: "pending" }]));
-      let pendentes = 0;
       jogos.forEach(j => {
         const res = resultados?.[j.id];
         if (res?.placar_a === null || res?.placar_a === undefined) { pendentes++; return; }
