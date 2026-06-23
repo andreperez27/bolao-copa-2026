@@ -290,28 +290,28 @@ export default function Ranking({
                   {c.acertos}/{c.total} acertos{" "}
                   {c.placaresExatos > 0 && (
                     <span style={{ color: "#FFD700", fontWeight: 700 }}>
-                      {" \u00B7 "}\uD83C\uDFAF {c.placaresExatos} exatos
+                      {" · "}🎯 {c.placaresExatos} exatos
                     </span>
                   )}
                   {c.empatesPalpitados > 0 && (
                     <span style={{ color: "#8B9CC8" }}>
-                      {" "}\u00B7 ={c.empatesPalpitados} empates apostados
+                      {" · "}={c.empatesPalpitados} empates apostados
                     </span>
                   )}
-                  {" \u00B7 "}Campe\u00e3o: {c.campeao || "\u2014"}{" "}
+                  {" · Campeão: "}{c.campeao || "—"}{" "}
                   {c.campeao === campeoReal && campeoReal
                     ? "\u2705 +" + pontosCampeaoPorFase(c.campeao_fase || "grupos")
                     : ""}
                   {viceCampeaoReal && getPalpite("palpite_vice_campeao", c) === viceCampeaoReal && (
-                    <span style={{ color: "#C0C0C0" }}> \u2022 Vice \u2705</span>
+                    <span style={{ color: "#C0C0C0" }}> • Vice ✅</span>
                   )}
                   {artilheiroRealNome && getPalpite("palpite_artilheiro_nome", c) === artilheiroRealNome && (
-                    <span style={{ color: "#FFD700" }}> \u2022 Artilheiro \u2705</span>
+                    <span style={{ color: "#FFD700" }}> • Artilheiro ✅</span>
                   )}
                   {campeoReal && c.campeao === campeoReal &&
                    viceCampeaoReal && getPalpite("palpite_vice_campeao", c) === viceCampeaoReal &&
                    artilheiroRealNome && getPalpite("palpite_artilheiro_nome", c) === artilheiroRealNome && (
-                    <span style={{ color: "#16a34a", fontWeight: 700 }}> \u2022 Combo! +{bonusCombo()}</span>
+                    <span style={{ color: "#16a34a", fontWeight: 700 }}> • Combo! +{bonusCombo()}</span>
                   )}
                   <span style={{ marginLeft: 6 }}>
                     <StatusBadge status={c.status} />
