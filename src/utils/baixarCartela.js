@@ -47,7 +47,18 @@ export function baixarCartelaHTML(cartela, participante) {
   });
 
   const faseLabel = cartela.campeao_fase === "grupos" ? "Fase de Grupos" : cartela.campeao_fase === "1_16" ? "Segunda Rodada" : cartela.campeao_fase === "oitavas" ? "Oitavas" : cartela.campeao_fase === "quartas" ? "Quartas" : cartela.campeao_fase === "semi" ? "Semifinal" : "Final";
-  html += `<div class="footer"><strong>Campeão:</strong> ${(cartela.campeao || "—").replace(/</g, "&lt;")}${cartela.campeao_fase ? `<span style="color:#666;font-size:11px;margin-left:8px">(definido na ${faseLabel})</span>` : ""}</div>`;
+  const getPalpite = (campo, def) => {
+    if (cartela[campo]) return cartela[campo];
+    const mapa = { vice_campeao: "__vice_campeao", artilheiro_nome: "__artilheiro_nome", artilheiro_selecao: "__artilheiro_selecao" };
+    return cartela.palpites?.[mapa[campo]] || def;
+  };
+  const vice = getPalpite("vice_campeao", "").replace(/</g, "&lt;");
+  const artNome = getPalpite("artilheiro_nome", "").replace(/</g, "&lt;");
+  html += `<div class="footer">`;
+  html += `<div><strong>Campeão:</strong> ${(cartela.campeao || "—").replace(/</g, "&lt;")}${cartela.campeao_fase ? `<span style="color:#666;font-size:11px;margin-left:8px">(definido na ${faseLabel})</span>` : ""}</div>`;
+  if (vice) html += `<div style="margin-top:4px"><strong>Vice-campeão:</strong> ${vice}</div>`;
+  if (artNome) html += `<div style="margin-top:4px"><strong>Artilheiro:</strong> ${artNome}</div>`;
+  html += `</div>`;
   html += `</body></html>`;
 
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
