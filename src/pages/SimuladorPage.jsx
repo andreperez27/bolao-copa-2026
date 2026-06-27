@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import BracketView from "../components/Bracket/BracketView";
-import { getKnockoutState } from "../utils/knockout";
 import { resolveInteractiveBracket, getDependentes } from "../utils/bracket";
 import {
   JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL,
@@ -30,11 +29,9 @@ export default function SimuladorPage({ resultados, onVoltar }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(escolhas));
   }, [escolhas]);
 
-  const knockoutBase = useMemo(() => getKnockoutState(resultados || {}), [resultados]);
-
   const bracketData = useMemo(
-    () => resolveInteractiveBracket(resultados || {}, escolhas, knockoutBase),
-    [resultados, escolhas, knockoutBase]
+    () => resolveInteractiveBracket(resultados || {}, escolhas),
+    [resultados, escolhas]
   );
 
   const phases = useMemo(() => {
