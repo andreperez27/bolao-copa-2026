@@ -51,6 +51,7 @@ export default function MinhasCartelas({
   onImportarCartela,
   onRefreshCartelas,
   onVerTabela,
+  onVerSimulador,
 }) {
   const { jogador, user } = useAuth();
   const [confirmDelete, setConfirmDelete] = React.useState(null);
@@ -143,6 +144,23 @@ export default function MinhasCartelas({
                 }}
               >
                 {"\uD83D\uDCC5"} Tabela
+              </button>
+            )}
+            {onVerSimulador && (
+              <button
+                onClick={onVerSimulador}
+                style={{
+                  background: "#FFD700",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                {"\uD83C\uDFC6"} Simulador
               </button>
             )}
           </div>

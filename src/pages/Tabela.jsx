@@ -405,7 +405,7 @@ ${innerHtml}
 </html>`;
 }
 
-export default function Tabela({ resultados, campeoReal, onVoltar }) {
+export default function Tabela({ resultados, campeoReal, onVoltar, onVerSimulador }) {
   const tabelaRef = useRef(null);
 
   const gruposEntries = useMemo(() => {
@@ -486,6 +486,16 @@ export default function Tabela({ resultados, campeoReal, onVoltar }) {
             <div style={{ color: "#FFD700", fontSize: 9, fontWeight: 700, letterSpacing: 2 }}>COPA DO MUNDO 2026</div>
             <div style={{ color: "#F0F4FF", fontSize: 17, fontWeight: 900, lineHeight: 1.1 }}>Tabela</div>
           </div>
+          {onVerSimulador && (
+            <button onClick={onVerSimulador} style={{
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+              background: "rgba(255,215,0,0.15)", border: "1px solid #FFD700",
+              color: "#FFD700", fontWeight: 700, fontSize: 11, padding: "7px 12px",
+              borderRadius: 999, cursor: "pointer",
+            }}>
+              {"\uD83C\uDFC6"} Simulador
+            </button>
+          )}
           <button onClick={handleDownload} style={{
             display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
             background: finalTerminou ? "linear-gradient(135deg, #B8860B, #FFD700)" : "rgba(0,51,160,0.5)",

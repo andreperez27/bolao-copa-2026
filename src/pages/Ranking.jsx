@@ -23,6 +23,7 @@ export default function Ranking({
   onResultadosChange,
   onShowInstrucoes,
   onVerTabela,
+  onVerSimulador,
   onVerCartela,
 }) {
   const medalhas = ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"];
@@ -148,6 +149,23 @@ export default function Ranking({
               }}
             >
               {"\uD83D\uDCC5"} Tabela
+            </button>
+          )}
+          {onVerSimulador && (
+            <button
+              onClick={onVerSimulador}
+              style={{
+                background: "rgba(0,0,0,0.3)",
+                border: "1px solid rgba(0,0,0,0.3)",
+                borderRadius: 8,
+                color: "#000",
+                padding: "6px 10px",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {"\uD83C\uDFC6"} Simulador
             </button>
           )}
           <button

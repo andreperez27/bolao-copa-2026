@@ -12,6 +12,7 @@ import MinhasCartelas from "./pages/MinhasCartelas";
 import PreencherCartela from "./pages/PreencherCartela";
 import RankingPage from "./pages/Ranking";
 import Tabela from "./pages/Tabela";
+import SimuladorPage from "./pages/SimuladorPage";
 import { ModalInstrucoes } from "./components/ModalInstrucoes";
 import { PrintArea } from "./components/PrintArea";
 import { OfflineBanner } from "./components/OfflineBanner";
@@ -199,6 +200,7 @@ export default function App() {
                 onShowInstrucoes={() => setShowInstrucoes(true)}
                 onImportarCartela={handleImportarCartela}
                 onVerTabela={() => navigate("/tabela")}
+                onVerSimulador={() => navigate("/simulador")}
               />
             ) : (
               <Login onLogin={handleLogin} />
@@ -240,6 +242,7 @@ export default function App() {
               onResultadosChange={handleResultadosChange}
               onShowInstrucoes={() => setShowInstrucoes(true)}
               onVerTabela={() => navigate("/tabela")}
+              onVerSimulador={() => navigate("/simulador")}
               onVerCartela={(c) => { setCartelaEditando(c); navigate("/preencher-cartela"); }}
             />
           }
@@ -251,6 +254,18 @@ export default function App() {
               resultados={resultados}
               campeoReal={campeoReal}
               onVoltar={() => navigate(-1)}
+              onVerSimulador={() => navigate("/simulador")}
+            />
+          }
+        />
+        <Route
+          path="/simulador"
+          element={
+            <SimuladorPage
+              resultados={resultados}
+              cartelas={atualCartelas}
+              jogador={jogador}
+              onVoltar={() => navigate(-1)}
             />
           }
         />
@@ -261,6 +276,7 @@ export default function App() {
               resultados={resultados}
               campeoReal={campeoReal}
               onVoltar={() => navigate(-1)}
+              onVerSimulador={() => navigate("/simulador")}
             />
           }
         />
