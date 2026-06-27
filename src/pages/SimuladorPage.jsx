@@ -115,7 +115,6 @@ export default function SimuladorPage({ resultados, onVoltar }) {
       width: "100vw",
       marginLeft: "calc(-50vw + 50%)",
       marginRight: "calc(-50vw + 50%)",
-      overflow: "hidden",
     }}>
       <div style={{
         background: "linear-gradient(135deg, #0033A0, #001a66)",
