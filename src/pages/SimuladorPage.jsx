@@ -5,7 +5,6 @@ import { resolveInteractiveBracket, getDependentes } from "../utils/bracket";
 import {
   JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL,
 } from "../services/jogos";
-import { NOMES_IA } from "../services/ia";
 
 const jogosInfoMap = {};
 for (const j of JOGOS_1_16) jogosInfoMap[j.id] = j;
@@ -16,7 +15,7 @@ for (const j of JOGOS_FINAL) jogosInfoMap[j.id] = j;
 
 const STORAGE_KEY = "bolao_bracket_escolhas";
 
-export default function SimuladorPage({ resultados, cartelas, jogador, onVoltar }) {
+export default function SimuladorPage({ resultados, onVoltar }) {
   const fileInputRef = useRef(null);
 
   const [escolhas, setEscolhas] = useState(() => {

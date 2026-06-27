@@ -263,8 +263,6 @@ export default function App() {
           element={
             <SimuladorPage
               resultados={resultados}
-              cartelas={atualCartelas}
-              jogador={jogador}
               onVoltar={() => navigate(-1)}
             />
           }
