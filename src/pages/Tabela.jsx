@@ -326,15 +326,15 @@ function KoJogo({ match, resultados, isFinal }) {
       boxShadow: isFinal ? "0 0 20px rgba(255,215,0,0.12)" : "none",
     }}>
       <div style={{
-        padding: "4px 8px", fontSize: 9, textAlign: "center",
+        padding: "6px 8px", fontSize: 11, textAlign: "center",
         background: isFinal ? "rgba(255,215,0,0.12)" : locked ? "rgba(202,138,4,0.12)" : "rgba(0,51,160,0.2)",
         color: "rgba(255,255,255,0.9)",
       }}>
-        <div style={{ fontWeight: 700, letterSpacing: 0.5 }}>
+        <div style={{ fontWeight: 700, letterSpacing: 0.5, lineHeight: 1.3 }}>
           {jogoData?.horario_brasilia || (locked ? "🔒 Aguardando..." : match.id)}
         </div>
         {jogoData?.estadio && (
-          <div style={{ fontSize: 7, color: "rgba(255,255,255,0.45)", marginTop: 1, letterSpacing: 0.3 }}>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", marginTop: 2, letterSpacing: 0.3, lineHeight: 1.2 }}>
             {jogoData.estadio}
           </div>
         )}
