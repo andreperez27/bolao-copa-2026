@@ -110,7 +110,13 @@ export default function SimuladorPage({ resultados, onVoltar }) {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0A0E1A" }}>
+    <div style={{
+      minHeight: "100vh", background: "#0A0E1A",
+      width: "100vw",
+      marginLeft: "calc(-50vw + 50%)",
+      marginRight: "calc(-50vw + 50%)",
+      overflow: "hidden",
+    }}>
       <div style={{
         background: "linear-gradient(135deg, #0033A0, #001a66)",
         padding: "14px 16px 12px",
