@@ -1,15 +1,17 @@
 import React from "react";
 import BracketMatch from "./BracketMatch";
 
-const ROUND_CONFIG = [
-  { key: "r32", label: "1/16 - 32 AVOS",  base: 6,  gapMult: 1 },
-  { key: "oit", label: "OITAVAS",          base: 6,  gapMult: 2 },
-  { key: "qua", label: "QUARTAS",          base: 6,  gapMult: 4 },
-  { key: "sem", label: "SEMI",             base: 6,  gapMult: 6 },
-  { key: "fin", label: "FINAL",            base: 6,  gapMult: 8 },
+const ROUNDS = [
+  { key: "r32", label: "1/16 - 32 AVOS" },
+  { key: "oit", label: "OITAVAS" },
+  { key: "qua", label: "QUARTAS" },
+  { key: "sem", label: "SEMI" },
+  { key: "fin", label: "FINAL" },
 ];
 
-export default function BracketView({ phases }) {
+const SPACING = [4, 80, 180, 380, 0];
+
+export default function BracketView({ phases, escolhas, onEscolha }) {
   if (!phases) return null;
 
   return (
@@ -18,17 +20,18 @@ export default function BracketView({ phases }) {
       padding: "16px 0 40px",
       WebkitOverflowScrolling: "touch",
     }}>
-      <div style={{ display: "flex", gap: 10, minWidth: 920, padding: "0 10px" }}>
-        {ROUND_CONFIG.map((cfg, ri) => {
+      <div style={{ display: "flex", gap: 14, minWidth: 940, padding: "0 10px" }}>
+        {ROUNDS.map((cfg, ri) => {
           const items = phases[cfg.key] || [];
+          const spacing = SPACING[ri];
           return (
             <div key={cfg.key} style={{
-              display: "flex", flexDirection: "column", gap: cfg.base + ri * cfg.gapMult,
-              minWidth: ri === 4 ? 210 : 180,
+              display: "flex", flexDirection: "column",
+              gap: spacing, minWidth: ri === 4 ? 210 : 180,
             }}>
               <div style={{
-                textAlign: "center", fontSize: 10, fontWeight: 800, color: "#FFD700",
-                letterSpacing: 1.5, padding: "6px 0",
+                textAlign: "center", fontSize: 10, fontWeight: 800,
+                color: "#FFD700", letterSpacing: 1.5, padding: "6px 0",
                 borderBottom: "1px solid rgba(255,215,0,0.2)", marginBottom: 2,
               }}>
                 {cfg.label}
@@ -38,10 +41,21 @@ export default function BracketView({ phases }) {
                   <BracketMatch
                     match={item.match}
                     jogoInfo={item.jogoInfo}
-                    palpite={item.palpite}
+                    escolha={escolhas?.[item.match?.id]}
+                    onEscolha={(lado) => onEscolha?.(item.match?.id, lado)}
                   />
                 </div>
               ))}
+              {cfg.key === "fin" && items.length > 0 && items[0]?.match?.winner && (
+                <div style={{
+                  textAlign: "center", marginTop: 8,
+                  fontSize: 14, fontWeight: 900, color: "#FFD700",
+                  letterSpacing: 2,
+                  animation: "pulse 2s infinite",
+                }}>
+                  🏆 CAMPEÃO
+                </div>
+              )}
             </div>
           );
         })}
