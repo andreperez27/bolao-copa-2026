@@ -295,9 +295,10 @@ function ThirdPlaceSection({ resultados }) {
   );
 }
 
-function KoJogo({ jogo, match, resultados, isFinal }) {
+function KoJogo({ match, resultados, isFinal }) {
   const res = resultados?.[match.id];
   const ok  = res?.placar_a !== null && res?.placar_a !== undefined;
+  const jogoData = [...JOGOS_1_16, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL].find(j => j.id === match.id);
 
   const team1Name = match.team1 || match.placeholder1 || "A definir";
   const team2Name = match.team2 || match.placeholder2 || "A definir";
@@ -329,16 +330,12 @@ function KoJogo({ jogo, match, resultados, isFinal }) {
         background: isFinal ? "rgba(255,215,0,0.12)" : locked ? "rgba(202,138,4,0.12)" : "rgba(0,51,160,0.2)",
         color: "rgba(255,255,255,0.9)",
       }}>
-        {locked ? (
-          "🔒 Aguardando..."
-        ) : (
-          <div style={{ fontWeight: 700, letterSpacing: 0.5 }}>
-            {jogo?.horario_brasilia || match.id}
-          </div>
-        )}
-        {jogo?.estadio && !locked && (
+        <div style={{ fontWeight: 700, letterSpacing: 0.5 }}>
+          {jogoData?.horario_brasilia || (locked ? "🔒 Aguardando..." : match.id)}
+        </div>
+        {jogoData?.estadio && (
           <div style={{ fontSize: 7, color: "rgba(255,255,255,0.45)", marginTop: 1, letterSpacing: 0.3 }}>
-            {jogo.estadio}
+            {jogoData.estadio}
           </div>
         )}
       </div>
@@ -544,7 +541,7 @@ export default function Tabela({ resultados, campeoReal, onVoltar }) {
               }}>{f.titulo}</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
                 {f.jogos.map(j => (
-                  <KoJogo key={j.id} jogo={j} match={j.match || {}} resultados={resultados} isFinal={f.isFinal} />
+                  <KoJogo key={j.id} match={j.match || {}} resultados={resultados} isFinal={f.isFinal} />
                 ))}
               </div>
             </div>
