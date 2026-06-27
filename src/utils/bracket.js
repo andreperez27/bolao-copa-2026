@@ -1,4 +1,7 @@
-import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING } from "./bracketMapping";
+import {
+  JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL,
+} from "../services/jogos";
+import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, R32_MAPPING } from "./bracketMapping";
 
 const ALL_MAPPINGS = {
   oit: OITAVAS_MAPPING,
@@ -6,6 +9,13 @@ const ALL_MAPPINGS = {
   sem: SEMI_MAPPING,
   fin: FINAL_MAPPING,
 };
+
+const jogosOriginais = {};
+for (const j of JOGOS_1_16) jogosOriginais[j.id] = j;
+for (const j of JOGOS_OITAVAS) jogosOriginais[j.id] = j;
+for (const j of JOGOS_QUARTAS) jogosOriginais[j.id] = j;
+for (const j of JOGOS_SEMI) jogosOriginais[j.id] = j;
+for (const j of JOGOS_FINAL) jogosOriginais[j.id] = j;
 
 export function getDependentes(jogoId) {
   const all = Object.values(ALL_MAPPINGS).flat();
@@ -59,36 +69,33 @@ export function resolveInteractiveBracket(resultados, escolhas, knockoutBase) {
     return winnerTeamName(match.team1, match.team2, lado);
   }
 
-  const r32 = (knockoutBase.r32 || []).map(m => ({
-    id: m.id,
-    team1: m.team1,
-    team2: m.team2,
-    result: placarReal(m.id),
-    winner: null,
-    travado: travado(m.id),
-  }));
+  const r32 = R32_MAPPING.map(m => {
+    const base = (knockoutBase.r32 || []).find(x => x.id === m.id) || {};
+    const original = jogosOriginais[m.id];
+    const team1 = base.team1 || (original ? original.time_a : null);
+    const team2 = base.team2 || (original ? original.time_b : null);
+    return {
+      id: m.id,
+      team1, team2,
+      result: placarReal(m.id),
+      winner: null,
+      travado: travado(m.id),
+    };
+  });
   for (const m of r32) m.winner = resolveMatchWinner(m);
 
   const winnerMap = {};
   for (const m of r32) winnerMap[m.id] = m.winner;
 
-  const phases = { r32 };
-
-  const phaseConfig = [
-    { key: "oit", mapping: OITAVAS_MAPPING, base: knockoutBase.oitavas || [] },
-    { key: "qua", mapping: QUARTAS_MAPPING, base: knockoutBase.quartas || [] },
-    { key: "sem", mapping: SEMI_MAPPING,    base: knockoutBase.semis || [] },
-    { key: "fin", mapping: FINAL_MAPPING,   base: knockoutBase.final || [] },
-  ];
-
-  for (const cfg of phaseConfig) {
-    const resolved = cfg.mapping.map(m => {
-      const team1 = winnerMap[m.slot1?.match] || null;
-      const team2 = winnerMap[m.slot2?.match] || null;
+  function resolvePhase(mappings, phaseKey) {
+    return mappings.map(m => {
+      const upstream1 = winnerMap[m.slot1?.match];
+      const upstream2 = winnerMap[m.slot2?.match];
+      const original = jogosOriginais[m.id];
+      const team1 = upstream1 || (original ? original.time_a : null);
+      const team2 = upstream2 || (original ? original.time_b : null);
       const match = {
-        id: m.id,
-        team1,
-        team2,
+        id: m.id, team1, team2,
         result: placarReal(m.id),
         winner: null,
         travado: travado(m.id),
@@ -97,8 +104,13 @@ export function resolveInteractiveBracket(resultados, escolhas, knockoutBase) {
       winnerMap[m.id] = match.winner;
       return match;
     });
-    phases[cfg.key] = resolved;
   }
 
-  return phases;
+  return {
+    r32,
+    oit: resolvePhase(OITAVAS_MAPPING, "oit"),
+    qua: resolvePhase(QUARTAS_MAPPING, "qua"),
+    sem: resolvePhase(SEMI_MAPPING, "sem"),
+    fin: resolvePhase(FINAL_MAPPING, "fin"),
+  };
 }

@@ -18,7 +18,7 @@ function Flag({ time, size = 14 }) {
 
 function isPlaceholder(name) {
   if (!name) return true;
-  return /^(\d+º|3º x|V\s|Vencedor|A definir)/.test(name);
+  return /^(\d+º|3º x|3º a definir|V\s|Vencedor|A definir)/.test(name);
 }
 
 export default function BracketMatch({ match, jogoInfo, escolha, onEscolha, cardWidth = 170 }) {
