@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/bolao-copa-2026/sw.js', { scope: '/bolao-copa-2026/' })})}
