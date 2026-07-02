@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from "react";
 import {
   JOGOS_GRUPOS, JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS,
-  JOGOS_SEMI, JOGOS_FINAL, ISO,
+  JOGOS_SEMI, JOGOS_FINAL, JOGOS_TERCEIRO, ISO,
 } from "../services/jogos";
 import { getStandingsForAllGroups, allGroupsFinished } from "../utils/standings";
 import { calculateThirdPlaceRanking } from "../utils/thirdPlace";
@@ -295,25 +295,39 @@ function ThirdPlaceSection({ resultados }) {
   );
 }
 
+function getWinnerFromResult(res, team1Name, team2Name) {
+  if (!res || res.placar_a == null) return null;
+  const ga = Number(res.placar_a), gb = Number(res.placar_b);
+  if (ga > gb) return team1Name;
+  if (gb > ga) return team2Name;
+  // empate — prorrogação
+  if (res.pro_a != null && res.pro_b != null && Number(res.pro_a) !== Number(res.pro_b)) {
+    return Number(res.pro_a) > Number(res.pro_b) ? team1Name : team2Name;
+  }
+  // empate — pênaltis
+  if (res.pen_a != null && res.pen_b != null && Number(res.pen_a) !== Number(res.pen_b)) {
+    return Number(res.pen_a) > Number(res.pen_b) ? team1Name : team2Name;
+  }
+  return null;
+}
+
 function KoJogo({ match, resultados, isFinal }) {
   const res = resultados?.[match.id];
   const ok  = res?.placar_a !== null && res?.placar_a !== undefined;
   const jogoData = [...JOGOS_1_16, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL].find(j => j.id === match.id);
 
-  const team1Name = match.team1 || match.placeholder1 || "A definir";
-  const team2Name = match.team2 || match.placeholder2 || "A definir";
-
   const isHolder = n => !n || n.startsWith("1º") || n.startsWith("2º") || n.startsWith("3º") ||
     n.includes("A definir") || n === "3º classificado" || n.startsWith("Vencedor");
 
+  const team1Name = match.team1 && !isHolder(match.team1) ? match.team1 : (jogoData?.time_a || match.placeholder1 || "A definir");
+  const team2Name = match.team2 && !isHolder(match.team2) ? match.team2 : (jogoData?.time_b || match.placeholder2 || "A definir");
+
   const lados = [
-    { nome: team1Name, gol: ok ? res.placar_a : null, confirmed: match.team1Confirmed },
-    { nome: team2Name, gol: ok ? res.placar_b : null, confirmed: match.team2Confirmed },
+    { nome: team1Name, gol: ok ? res.placar_a : null, pen: res?.pen_a, confirmed: match.team1Confirmed },
+    { nome: team2Name, gol: ok ? res.placar_b : null, pen: res?.pen_b, confirmed: match.team2Confirmed },
   ];
 
-  const vencedor = ok && Number(res.placar_a) !== Number(res.placar_b)
-    ? (Number(res.placar_a) > Number(res.placar_b) ? team1Name : team2Name)
-    : null;
+  const vencedor = ok ? getWinnerFromResult(res, team1Name, team2Name) : null;
 
   const locked = !match.unlocked;
 
@@ -331,7 +345,7 @@ function KoJogo({ match, resultados, isFinal }) {
         color: "rgba(255,255,255,0.9)",
       }}>
         <div style={{ fontWeight: 700, letterSpacing: 0.5, lineHeight: 1.3 }}>
-          {jogoData?.horario_brasilia || (locked ? "🔒 Aguardando..." : match.id)}
+          #{match.id} · {jogoData?.horario_brasilia || (locked ? "🔒 Aguardando..." : "")}
         </div>
         {jogoData?.estadio && (
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", marginTop: 2, letterSpacing: 0.3, lineHeight: 1.2 }}>
@@ -360,14 +374,18 @@ function KoJogo({ match, resultados, isFinal }) {
           <div style={{
             background: !locked && l.gol !== null ? "#0A0E1A" : "transparent",
             border: !locked && l.gol !== null ? "1px solid #1E2A45" : "none",
-            borderRadius: 4, width: 22, height: 22, display: "flex",
+            borderRadius: 4, minWidth: 22, height: 22, display: "flex",
             alignItems: "center", justifyContent: "center",
-            flexShrink: 0, marginLeft: 8, fontWeight: 900, fontSize: 12,
+            flexShrink: 0, marginLeft: 8, fontWeight: 900, fontSize: 12, gap: 1, padding: "0 4px",
             color: l.gol !== null
               ? (isFinal ? "#FFD700" : l.nome === vencedor ? "#22c55e" : "#F0F4FF")
               : "#4B5563",
           }}>
-            {l.gol !== null ? l.gol : (locked ? "" : "·")}
+            {l.gol !== null ? (
+              l.pen != null
+                ? <><span>{l.gol}</span><span style={{fontSize:9,color:"#FFD700"}}>({l.pen})</span></>
+                : l.gol
+            ) : (locked ? "" : "·")}
           </div>
         </div>
       ))}
@@ -451,6 +469,10 @@ export default function Tabela({ resultados, campeoReal, onVoltar, onVerSimulado
       const m = knockoutState.final.find(x => x.id === j.id);
       return { ...j, match: m || { unlocked: false } };
     }), isFinal: true },
+    { titulo: "\uD83E\uDD49 DISPUTA DO 3\u00BA LUGAR", jogos: JOGOS_TERCEIRO.map(j => {
+      const m = knockoutState.terceiro?.find(x => x.id === j.id);
+      return { ...j, match: m || { unlocked: false } };
+    }), isFinal: false },
   ], [knockoutState]);
 
   const handleDownload = () => {

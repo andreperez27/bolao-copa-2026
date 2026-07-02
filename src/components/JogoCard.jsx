@@ -55,6 +55,21 @@ export function JogoCard({ jogo, palpite, resultado, onChange, disabled }) {
   const salvo = palpite?.gols_a !== undefined;
   const bloqueado = disabled || isJogoBloqueado(jogo);
 
+  if (jogo._awaiting) {
+    return (
+      <div style={{ background: "#111827", border: "1px dashed #1E2A45", borderRadius: 12, padding: 16, marginBottom: 10, opacity: 0.65 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ background: "#0033A0", color: "#fff", padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>#{jogo.id}</span>
+          <span style={{ background: "#1a3a7a", color: "#fff", padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>{jogo.grupo}</span>
+          <span style={{ color: "#8B9CC8", fontSize: 11 }}>{jogo.horario_brasilia}</span>
+        </div>
+        <div style={{ textAlign: "center", color: "#8B9CC8", fontSize: 13, padding: "20px 0" }}>
+          {"\u23F3"} Aguardando definição das equipes
+        </div>
+      </div>
+    );
+  }
+
   const feedback = (palpite?.gols_a !== undefined && resultado)
     ? calcularPontos(palpite, resultado)
     : null;
@@ -87,7 +102,8 @@ export function JogoCard({ jogo, palpite, resultado, onChange, disabled }) {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        {badge(jogo.grupo, "#0033A0")}
+        {badge(`#${jogo.id}`, "#0033A0")}
+        {badge(jogo.grupo, "#1a3a7a")}
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {bloqueado && <span style={{ fontSize: 11, color: "#C8102E", fontWeight: 700 }}>{"\uD83D\uDD12"}</span>}
           <span style={{ color: "#8B9CC8", fontSize: 12 }}>{jogo.horario_brasilia} {jogo.estadio && <span style={{color:"#6B7CA8",fontSize:10,marginLeft:4}}>{jogo.estadio}</span>}</span>
@@ -203,7 +219,7 @@ export function JogoCard({ jogo, palpite, resultado, onChange, disabled }) {
             letterSpacing: 0.5,
           }}
         >
-          Resultado: {resultado.placar_a} × {resultado.placar_b}
+          Resultado: {resultado.placar_a}{resultado.pen_a != null ? <span style={{color:"#FFD700"}}> ({resultado.pen_a})</span> : ''} × {resultado.placar_b}{resultado.pen_b != null ? <span style={{color:"#FFD700"}}> ({resultado.pen_b})</span> : ''}
         </div>
       )}
     </div>

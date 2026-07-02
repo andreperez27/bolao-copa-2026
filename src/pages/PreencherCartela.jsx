@@ -9,13 +9,14 @@ import {
   JOGOS_QUARTAS,
   JOGOS_SEMI,
   JOGOS_FINAL,
+  JOGOS_TERCEIRO,
   JOGOS_TODOS,
   TODOS_TIMES,
 } from "../services/jogos";
 import { getFaseAtual, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
 import { calcularGrupo, allGroupsFinished } from "../utils/standings";
 import { calculateThirdPlaceRanking, getThirdPlaceSlots } from "../utils/thirdPlace";
-import { R32_MAPPING } from "../utils/bracketMapping";
+import { getKnockoutState } from "../utils/knockout";
 import { isJogoBloqueado } from "../utils/datas";
 import { listarCartelasIA } from "../services/ia";
 import SugestoesIA from "../components/SugestoesIA";
@@ -48,6 +49,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     try { return LETRAS.map(letra => ({ grupo: letra, times: calcularGrupo(letra, resultados || {}) })); }
     catch { return []; }
   }, [resultados, LETRAS]);
+  const knockoutState = React.useMemo(() => getKnockoutState(resultados || {}), [resultados]);
 
   useEffect(() => {
     listarCartelasIA().then(setIaCartelas).catch(() => {});
@@ -65,7 +67,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     "Grupo A","Grupo B","Grupo C","Grupo D",
     "Grupo E","Grupo F","Grupo G","Grupo H",
     "Grupo I","Grupo J","Grupo K","Grupo L",
-    "Segunda Rodada","Oitavas","Quartas","Semi","Final",
+    "Segunda Rodada","Oitavas","Quartas","Semi","Final","3º Lugar",
   ];
 
   const isNew = !cartela?.id;
@@ -131,7 +133,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   const handleSalvar = () => {
     const palpitesFiltrados = { ...(cartela?.palpites || {}) };
     const gamesMap = {};
-    for (const fase of ["Grupo A","Grupo B","Grupo C","Grupo D","Grupo E","Grupo F","Grupo G","Grupo H","Grupo I","Grupo J","Grupo K","Grupo L","Segunda Rodada","Oitavas","Quartas","Semi","Final"]) {
+    for (const fase of ["Grupo A","Grupo B","Grupo C","Grupo D","Grupo E","Grupo F","Grupo G","Grupo H","Grupo I","Grupo J","Grupo K","Grupo L","Segunda Rodada","Oitavas","Quartas","Semi","Final","3º Lugar"]) {
       for (const j of jogosPorGrupo(fase)) gamesMap[j.id] = j;
     }
     for (const [jogoId, valor] of Object.entries(palpites)) {
@@ -159,78 +161,27 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   };
 
   const jogosPorGrupo = (grupo) => {
-    const resultadosR = resultados || {};
+    const ks = knockoutState;
+    const merge = (rawList, bracketList) => rawList.map(j => {
+      const state = (bracketList || []).find(s => s.id === j.id) || {};
+      const team1 = state.team1 || j.time_a;
+      const team2 = state.team2 || j.time_b;
+      const ambosDefinidos = !!(state.team1 && state.team2);
+      return {
+        ...j,
+        time_a: team1,
+        time_b: team2,
+        _unlocked: ambosDefinidos,
+        _awaiting: !ambosDefinidos,
+      };
+    });
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
-    if (grupo === "Segunda Rodada") {
-      const groupsFinished = allGroupsFinished(resultadosR);
-      const thirdSlots = groupsFinished ? getThirdPlaceSlots(resultadosR) : [];
-      const resolved = {};
-      const usedThird = new Set();
-      for (const m of R32_MAPPING) {
-        let t1 = null, t2 = null;
-        let labelA = "", labelB = "";
-        if (m.type === "A") {
-          const g1 = standings.find(s => s.grupo === m.slot1.grupo);
-          const g2 = standings.find(s => s.grupo === m.slot2.grupo);
-          t1 = g1?.times?.[m.slot1.pos - 1];
-          t2 = g2?.times?.[m.slot2.pos - 1];
-          labelA = `${m.slot1.pos === 1 ? "1º" : "2º"} ${m.slot1.grupo}`;
-          labelB = `${m.slot2.pos === 1 ? "1º" : "2º"} ${m.slot2.grupo}`;
-        } else {
-          const g1 = standings.find(s => s.grupo === m.slot1.grupo);
-          t1 = g1?.times?.[m.slot1.pos - 1];
-          labelA = `1º ${m.slot1.grupo}`;
-          if (thirdSlots.length) {
-            const eligible = thirdSlots
-              .filter(t => m.slot2.pool.includes(t.grupo) && !usedThird.has(t.grupo))
-              .sort((a, b) => a.rank - b.rank);
-            if (eligible.length) {
-              t2 = { time: eligible[0].time };
-              labelB = `3º ${eligible[0].grupo}`;
-              usedThird.add(eligible[0].grupo);
-            }
-          }
-          if (!t2) labelB = "3º x";
-        }
-        const unlocked = m.type === "A"
-          ? !!(t1?.time && t2?.time)
-          : !!(t1?.confirmed && t2 && groupsFinished);
-        resolved[m.id] = {
-          time_a: t1?.time || `1º ${m.slot1.grupo || ""}`,
-          time_b: t2?.time || (m.type === "A" ? `2º ${m.slot2.grupo}` : "3º x"),
-          time_a_label: labelA,
-          time_b_label: labelB,
-          unlocked,
-        };
-      }
-      return JOGOS_1_16.map(j => {
-        const r = resolved[j.id];
-        if (!r) return j;
-        return { ...j, time_a: r.time_a, time_b: r.time_b, time_a_label: r.time_a_label, time_b_label: r.time_b_label, _unlocked: r.unlocked };
-      });
-    }
-    if (grupo === "Oitavas") {
-      return JOGOS_OITAVAS.map(j => {
-        const res = resultadosR?.[j.id];
-        const hasResult = res?.placar_a != null;
-        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
-      });
-    }
-    if (grupo === "Quartas") {
-      return JOGOS_QUARTAS.map(j => {
-        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
-      });
-    }
-    if (grupo === "Semi") {
-      return JOGOS_SEMI.map(j => {
-        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
-      });
-    }
-    if (grupo === "Final") {
-      return JOGOS_FINAL.map(j => {
-        return { ...j, _unlocked: false, time_a: j.time_a, time_b: j.time_b };
-      });
-    }
+    if (grupo === "Segunda Rodada") return JOGOS_1_16.map(j => ({ ...j, _unlocked: true }));
+    if (grupo === "Oitavas") return merge(JOGOS_OITAVAS, ks.oitavas);
+    if (grupo === "Quartas") return merge(JOGOS_QUARTAS, ks.quartas);
+    if (grupo === "Semi") return merge(JOGOS_SEMI, ks.semis);
+    if (grupo === "Final") return merge(JOGOS_FINAL, ks.final);
+    if (grupo === "3º Lugar") return merge(JOGOS_TERCEIRO, ks.terceiro);
     return [];
   };
 
@@ -241,6 +192,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     if (["quartas", "semi", "final"].includes(faseAtual)) t += JOGOS_QUARTAS.length;
     if (["semi", "final"].includes(faseAtual)) t += JOGOS_SEMI.length;
     if (faseAtual === "final") t += JOGOS_FINAL.length;
+    if (["semi", "final"].includes(faseAtual)) t += JOGOS_TERCEIRO.length;
     return t;
   })();
 

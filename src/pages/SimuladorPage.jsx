@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import BracketView from "../components/Bracket/BracketView";
 import { resolveInteractiveBracket, getDependentes } from "../utils/bracket";
 import {
-  JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL,
+  JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL, JOGOS_TERCEIRO,
 } from "../services/jogos";
 
 const jogosInfoMap = {};
@@ -11,11 +11,28 @@ for (const j of JOGOS_OITAVAS) jogosInfoMap[j.id] = j;
 for (const j of JOGOS_QUARTAS) jogosInfoMap[j.id] = j;
 for (const j of JOGOS_SEMI) jogosInfoMap[j.id] = j;
 for (const j of JOGOS_FINAL) jogosInfoMap[j.id] = j;
+for (const j of JOGOS_TERCEIRO) jogosInfoMap[j.id] = j;
 
 const STORAGE_KEY = "bolao_bracket_escolhas";
+const BANNER_KEY = "bolao_banner_oitavas_visto";
 
 export default function SimuladorPage({ resultados, onVoltar }) {
   const fileInputRef = useRef(null);
+  const [bannerVisible, setBannerVisible] = useState(() => {
+    try {
+      const visto = localStorage.getItem(BANNER_KEY);
+      if (visto) {
+        const diff = Date.now() - Number(visto);
+        if (diff < 7 * 24 * 60 * 60 * 1000) return false;
+      }
+    } catch {}
+    return true;
+  });
+
+  const dismissBanner = useCallback(() => {
+    localStorage.setItem(BANNER_KEY, String(Date.now()));
+    setBannerVisible(false);
+  }, []);
 
   const [escolhas, setEscolhas] = useState(() => {
     try {
@@ -47,12 +64,13 @@ export default function SimuladorPage({ resultados, onVoltar }) {
       qua: mapPhase(bracketData.qua),
       sem: mapPhase(bracketData.sem),
       fin: mapPhase(bracketData.fin),
+      ter: mapPhase(bracketData.ter || []),
     };
   }, [bracketData]);
 
   const progresso = useMemo(() => {
     if (!bracketData) return { escolhidos: 0, total: 0 };
-    const all = [].concat(bracketData.r32, bracketData.oit, bracketData.qua, bracketData.sem, bracketData.fin);
+    const all = [].concat(bracketData.r32, bracketData.oit, bracketData.qua, bracketData.sem, bracketData.fin, bracketData.ter || []);
     const escolhidos = all.filter(m => m.winner || m.travado).length;
     return { escolhidos, total: all.length };
   }, [bracketData]);
@@ -60,13 +78,30 @@ export default function SimuladorPage({ resultados, onVoltar }) {
   const handleEscolha = useCallback((jogoId, lado) => {
     setEscolhas(prev => {
       if (lado === null) {
-        const { [jogoId]: _, ...rest } = prev;
+        const { [jogoId]: _, [`terceiro_${jogoId}`]: __, ...rest } = prev;
         return rest;
       }
       if (prev[jogoId] === lado) return prev;
       const dependentes = getDependentes(jogoId);
       const novo = { ...prev, [jogoId]: lado };
-      dependentes.forEach(id => delete novo[id]);
+      dependentes.forEach(id => {
+        delete novo[id];
+        delete novo[`terceiro_${id}`];
+      });
+      return novo;
+    });
+  }, []);
+
+  const handleEscolhaTerceiro = useCallback((jogoId, teamName) => {
+    setEscolhas(prev => {
+      const key = `terceiro_${jogoId}`;
+      if (prev[key] === teamName) return prev;
+      const dependentes = getDependentes(jogoId);
+      const novo = { ...prev, [key]: teamName };
+      dependentes.forEach(id => {
+        delete novo[id];
+        delete novo[`terceiro_${id}`];
+      });
       return novo;
     });
   }, []);
@@ -176,7 +211,25 @@ export default function SimuladorPage({ resultados, onVoltar }) {
         </div>
       </div>
 
-      <BracketView phases={phases} escolhas={escolhas} onEscolha={handleEscolha} />
+      {bannerVisible && (
+  <div style={{
+    background: "#1E1A0A", borderBottom: "1px solid #FFD70044",
+    padding: "8px 16px", display: "flex", alignItems: "center",
+    gap: 8, fontSize: 11, color: "#FFD700",
+  }}>
+    <span style={{ flex: 1 }}>
+      ⚠️ Os confrontos das Oitavas foram corrigidos conforme chaveamento oficial da FIFA.
+      Se voc&ecirc; salvou um bracket anterior, fa&ccedil;a o download novamente.
+    </span>
+    <button onClick={dismissBanner} style={{
+      background: "transparent", border: "none",
+      color: "#FFD70088", cursor: "pointer", fontSize: 14, fontWeight: 700,
+      padding: "2px 8px", lineHeight: 1,
+    }}>✕</button>
+  </div>
+)}
+
+<BracketView phases={phases} escolhas={escolhas} onEscolha={handleEscolha} onEscolhaTerceiro={handleEscolhaTerceiro} />
 
       <div style={{
         display: "flex", gap: 12, justifyContent: "center", padding: "12px 16px 40px",

@@ -13,12 +13,12 @@ export const JOGOS_GRUPOS = [
 { id: "wc2026-5",  time_a: "África do Sul",     time_b: "Coreia do Sul",      horario_brasilia: "24/06 22:00", grupo: "Grupo A", estadio: "Estadio BBVA, Monterrey",                   data_iso: "2026-06-24", round: "Matchday 14" },
 
 // ── Grupo B ─────────────────────────────────────────────
-{ id: "wc2026-6",  time_a: "Canadá",            time_b: "Bosnia & Herzegovina", horario_brasilia: "12/06 16:00", grupo: "Grupo B", estadio: "BMO Field, Toronto",                    data_iso: "2026-06-12", round: "Matchday 2" },
+{ id: "wc2026-6",  time_a: "Canadá",            time_b: "Bósnia e Herzegovina", horario_brasilia: "12/06 16:00", grupo: "Grupo B", estadio: "BMO Field, Toronto",                    data_iso: "2026-06-12", round: "Matchday 2" },
 { id: "wc2026-7",  time_a: "Qatar",             time_b: "Suíça",              horario_brasilia: "13/06 16:00", grupo: "Grupo B", estadio: "BC Place, Vancouver",                       data_iso: "2026-06-13", round: "Matchday 3" },
-{ id: "wc2026-8",  time_a: "Suíça",             time_b: "Bosnia & Herzegovina", horario_brasilia: "18/06 16:00", grupo: "Grupo B", estadio: "SoFi Stadium, Inglewood",               data_iso: "2026-06-18", round: "Matchday 8" },
+{ id: "wc2026-8",  time_a: "Suíça",             time_b: "Bósnia e Herzegovina", horario_brasilia: "18/06 16:00", grupo: "Grupo B", estadio: "SoFi Stadium, Inglewood",               data_iso: "2026-06-18", round: "Matchday 8" },
 { id: "wc2026-9",  time_a: "Canadá",            time_b: "Qatar",              horario_brasilia: "18/06 19:00", grupo: "Grupo B", estadio: "BC Place, Vancouver",                       data_iso: "2026-06-18", round: "Matchday 8" },
 { id: "wc2026-10", time_a: "Suíça",             time_b: "Canadá",             horario_brasilia: "24/06 16:00", grupo: "Grupo B", estadio: "BC Place, Vancouver",                       data_iso: "2026-06-24", round: "Matchday 14" },
-{ id: "wc2026-11", time_a: "Bosnia & Herzegovina", time_b: "Qatar",           horario_brasilia: "24/06 16:00", grupo: "Grupo B", estadio: "Lumen Field, Seattle",                      data_iso: "2026-06-24", round: "Matchday 14" },
+{ id: "wc2026-11", time_a: "Bósnia e Herzegovina", time_b: "Qatar",           horario_brasilia: "24/06 16:00", grupo: "Grupo B", estadio: "Lumen Field, Seattle",                      data_iso: "2026-06-24", round: "Matchday 14" },
 
 // ── Grupo C ─────────────────────────────────────────────
 { id: "wc2026-12", time_a: "Brasil",            time_b: "Marrocos",           horario_brasilia: "13/06 19:00", grupo: "Grupo C", estadio: "MetLife Stadium, East Rutherford",          data_iso: "2026-06-13", round: "Matchday 3" },
@@ -103,74 +103,68 @@ export const JOGOS_GRUPOS = [
 ];
 
 export const JOGOS_1_16 = [
-// 28/jun — 1 jogo
-{ id: "73", time_a: "2º A",  time_b: "2º B",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "28/06 16:00", grupo: "1/16", estadio: "SoFi Stadium, Inglewood",                data_iso: "2026-06-28", round: "Last 32" },
-// 29/jun — 3 jogos
-{ id: "76", time_a: "1º C",  time_b: "2º F",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "29/06 14:00", grupo: "1/16", estadio: "NRG Stadium, Houston",                    data_iso: "2026-06-29", round: "Last 32" },
-{ id: "74", time_a: "1º E",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "29/06 17:30", grupo: "1/16", estadio: "Gillette Stadium, Foxborough",            data_iso: "2026-06-29", round: "Last 32" },
-{ id: "75", time_a: "1º F",  time_b: "2º C",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "29/06 22:00", grupo: "1/16", estadio: "Estadio BBVA, Monterrey",                 data_iso: "2026-06-29", round: "Last 32" },
-// 30/jun — 3 jogos
-{ id: "78", time_a: "2º E",  time_b: "2º I",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "30/06 14:00", grupo: "1/16", estadio: "AT&T Stadium, Arlington",                 data_iso: "2026-06-30", round: "Last 32" },
-{ id: "77", time_a: "1º I",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "30/06 18:00", grupo: "1/16", estadio: "MetLife Stadium, East Rutherford",        data_iso: "2026-06-30", round: "Last 32" },
-{ id: "79", time_a: "1º A",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "30/06 22:00", grupo: "1/16", estadio: "Estadio Azteca, Mexico City",             data_iso: "2026-06-30", round: "Last 32" },
-// 01/jul — 3 jogos
-{ id: "80", time_a: "1º L",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "01/07 13:00", grupo: "1/16", estadio: "Mercedes-Benz Stadium, Atlanta",          data_iso: "2026-07-01", round: "Last 32" },
-{ id: "82", time_a: "1º G",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "01/07 17:00", grupo: "1/16", estadio: "Lumen Field, Seattle",                    data_iso: "2026-07-01", round: "Last 32" },
-{ id: "81", time_a: "1º D",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "01/07 21:00", grupo: "1/16", estadio: "SoFi Stadium, Inglewood",                data_iso: "2026-07-01", round: "Last 32" },
-// 02/jul — 2 jogos
-{ id: "84", time_a: "1º H",  time_b: "2º J",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "02/07 16:00", grupo: "1/16", estadio: "AT&T Stadium, Arlington",                 data_iso: "2026-07-02", round: "Last 32" },
-{ id: "83", time_a: "2º K",  time_b: "2º L",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "02/07 20:00", grupo: "1/16", estadio: "BMO Field, Toronto",                      data_iso: "2026-07-02", round: "Last 32" },
-// 03/jul — 4 jogos
-{ id: "85", time_a: "1º B",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 00:00", grupo: "1/16", estadio: "BC Place, Vancouver",                     data_iso: "2026-07-03", round: "Last 32" },
-{ id: "88", time_a: "2º D",  time_b: "2º G",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 15:00", grupo: "1/16", estadio: "AT&T Stadium, Arlington",                 data_iso: "2026-07-03", round: "Last 32" },
-{ id: "86", time_a: "1º J",  time_b: "2º H",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 19:00", grupo: "1/16", estadio: "NRG Stadium, Houston",                    data_iso: "2026-07-03", round: "Last 32" },
-{ id: "87", time_a: "1º K",  time_b: "3º x",  placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 22:30", grupo: "1/16", estadio: "Estadio BBVA, Monterrey",                 data_iso: "2026-07-03", round: "Last 32" },
+{ id: "73", time_a: "África do Sul",              time_b: "Canadá",             placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "28/06 16:00", grupo: "1/16", estadio: "SoFi Stadium, Inglewood",                data_iso: "2026-06-28", round: "Last 32" },
+{ id: "74", time_a: "Alemanha",                   time_b: "Paraguai",           placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "29/06 17:30", grupo: "1/16", estadio: "Gillette Stadium, Foxborough",            data_iso: "2026-06-29", round: "Last 32" },
+{ id: "75", time_a: "Holanda",                    time_b: "Marrocos",           placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "29/06 22:00", grupo: "1/16", estadio: "Estádio BBVA, Monterrey",                data_iso: "2026-06-29", round: "Last 32" },
+{ id: "76", time_a: "Brasil",                     time_b: "Japão",              placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "29/06 14:00", grupo: "1/16", estadio: "NRG Stadium, Houston",                    data_iso: "2026-06-29", round: "Last 32" },
+{ id: "77", time_a: "França",                     time_b: "Suécia",             placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "30/06 18:00", grupo: "1/16", estadio: "MetLife Stadium, East Rutherford",        data_iso: "2026-06-30", round: "Last 32" },
+{ id: "78", time_a: "Costa do Marfim",            time_b: "Noruega",            placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "30/06 14:00", grupo: "1/16", estadio: "AT&T Stadium, Arlington",                 data_iso: "2026-06-30", round: "Last 32" },
+{ id: "79", time_a: "México",                     time_b: "Equador",            placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "30/06 22:00", grupo: "1/16", estadio: "Estadio Azteca, Mexico City",             data_iso: "2026-06-30", round: "Last 32" },
+{ id: "80", time_a: "Inglaterra",                 time_b: "RD Congo",           placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "01/07 13:00", grupo: "1/16", estadio: "Mercedes-Benz Stadium, Atlanta",          data_iso: "2026-07-01", round: "Last 32" },
+{ id: "81", time_a: "Estados Unidos",             time_b: "Bósnia e Herzegovina", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "01/07 21:00", grupo: "1/16", estadio: "Levi's Stadium, Santa Clara",         data_iso: "2026-07-01", round: "Last 32" },
+{ id: "82", time_a: "Bélgica",                    time_b: "Senegal",            placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "01/07 17:00", grupo: "1/16", estadio: "Lumen Field, Seattle",                   data_iso: "2026-07-01", round: "Last 32" },
+{ id: "83", time_a: "Portugal",                   time_b: "Croácia",            placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "02/07 20:00", grupo: "1/16", estadio: "BMO Field, Toronto",                      data_iso: "2026-07-02", round: "Last 32" },
+{ id: "84", time_a: "Espanha",                    time_b: "Áustria",            placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "02/07 16:00", grupo: "1/16", estadio: "SoFi Stadium, Inglewood",                data_iso: "2026-07-02", round: "Last 32" },
+{ id: "85", time_a: "Suíça",                      time_b: "Argélia",            placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 00:00", grupo: "1/16", estadio: "BC Place, Vancouver",                     data_iso: "2026-07-03", round: "Last 32" },
+{ id: "86", time_a: "Argentina",                  time_b: "Cabo Verde",         placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 19:00", grupo: "1/16", estadio: "Hard Rock Stadium, Miami Gardens",        data_iso: "2026-07-03", round: "Last 32" },
+{ id: "87", time_a: "Colômbia",                   time_b: "Gana",               placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 22:30", grupo: "1/16", estadio: "Arrowhead Stadium, Kansas City",          data_iso: "2026-07-03", round: "Last 32" },
+{ id: "88", time_a: "Austrália",                  time_b: "Egito",              placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "03/07 15:00", grupo: "1/16", estadio: "AT&T Stadium, Arlington",                 data_iso: "2026-07-03", round: "Last 32" },
 ];
 
 export const JOGOS_OITAVAS = [
-// 04/jul
-{ id: "oit-1", time_a: "V 90 (V73xV75)", time_b: "V 89 (V74xV77)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "04/07 14:00", grupo: "Oitavas", estadio: "NRG Stadium, Houston",               data_iso: "2026-07-04", round: "Round of 16" },
-{ id: "oit-2", time_a: "V 89 (V74xV77)", time_b: "V 90 (V73xV75)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "04/07 18:00", grupo: "Oitavas", estadio: "Lincoln Financial Field, Philadelphia", data_iso: "2026-07-04", round: "Round of 16" },
-// 05/jul
-{ id: "oit-3", time_a: "V 91 (V76xV78)", time_b: "V 92 (V79xV80)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "05/07 17:00", grupo: "Oitavas", estadio: "MetLife Stadium, East Rutherford",    data_iso: "2026-07-05", round: "Round of 16" },
-{ id: "oit-4", time_a: "V 92 (V79xV80)", time_b: "V 91 (V76xV78)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "05/07 21:00", grupo: "Oitavas", estadio: "Estadio Azteca, Mexico City",         data_iso: "2026-07-05", round: "Round of 16" },
-// 06/jul
-{ id: "oit-5", time_a: "V 93 (V83xV84)", time_b: "V 94 (V81xV82)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "06/07 16:00", grupo: "Oitavas", estadio: "AT&T Stadium, Arlington",             data_iso: "2026-07-06", round: "Round of 16" },
-{ id: "oit-6", time_a: "V 94 (V81xV82)", time_b: "V 93 (V83xV84)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "06/07 21:00", grupo: "Oitavas", estadio: "Lumen Field, Seattle",                data_iso: "2026-07-06", round: "Round of 16" },
-// 07/jul
-{ id: "oit-7", time_a: "V 95 (V86xV88)", time_b: "V 96 (V85xV87)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "07/07 13:00", grupo: "Oitavas", estadio: "Mercedes-Benz Stadium, Atlanta",      data_iso: "2026-07-07", round: "Round of 16" },
-{ id: "oit-8", time_a: "V 96 (V85xV87)", time_b: "V 95 (V86xV88)", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "07/07 17:00", grupo: "Oitavas", estadio: "BC Place, Vancouver",                 data_iso: "2026-07-07", round: "Round of 16" },
+{ id: "oit-1", time_a: "V 73", time_b: "V 75", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "04/07 14:00", grupo: "Oitavas", estadio: "NRG Stadium, Houston",                        data_iso: "2026-07-04", round: "Round of 16" },
+{ id: "oit-2", time_a: "V 74", time_b: "V 77", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "04/07 18:00", grupo: "Oitavas", estadio: "Lincoln Financial Field, Philadelphia",       data_iso: "2026-07-04", round: "Round of 16" },
+{ id: "oit-3", time_a: "V 76", time_b: "V 78", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "05/07 17:00", grupo: "Oitavas", estadio: "MetLife Stadium, East Rutherford",             data_iso: "2026-07-05", round: "Round of 16" },
+{ id: "oit-4", time_a: "V 79", time_b: "V 80", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "05/07 21:00", grupo: "Oitavas", estadio: "Estadio Azteca, Mexico City",                  data_iso: "2026-07-05", round: "Round of 16" },
+{ id: "oit-5", time_a: "V 81", time_b: "V 82", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "06/07 16:00", grupo: "Oitavas", estadio: "AT&T Stadium, Arlington",                      data_iso: "2026-07-06", round: "Round of 16" },
+{ id: "oit-6", time_a: "V 83", time_b: "V 84", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "06/07 21:00", grupo: "Oitavas", estadio: "Lumen Field, Seattle",                         data_iso: "2026-07-06", round: "Round of 16" },
+{ id: "oit-7", time_a: "V 85", time_b: "V 87", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "07/07 13:00", grupo: "Oitavas", estadio: "Mercedes-Benz Stadium, Atlanta",               data_iso: "2026-07-07", round: "Round of 16" },
+{ id: "oit-8", time_a: "V 86", time_b: "V 88", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "07/07 17:00", grupo: "Oitavas", estadio: "BC Place, Vancouver",                          data_iso: "2026-07-07", round: "Round of 16" },
 ];
 
 export const JOGOS_QUARTAS = [
-{ id: "qua-1", time_a: "V Oit89", time_b: "V Oit90", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "09/07 17:00", grupo: "Quartas", estadio: "Gillette Stadium, Foxborough",        data_iso: "2026-07-09", round: "Quarter-finals" },
-{ id: "qua-2", time_a: "V Oit93", time_b: "V Oit94", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "10/07 16:00", grupo: "Quartas", estadio: "SoFi Stadium, Inglewood",             data_iso: "2026-07-10", round: "Quarter-finals" },
-{ id: "qua-3", time_a: "V Oit91", time_b: "V Oit92", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 18:00", grupo: "Quartas", estadio: "Hard Rock Stadium, Miami Gardens",    data_iso: "2026-07-11", round: "Quarter-finals" },
-{ id: "qua-4", time_a: "V Oit95", time_b: "V Oit96", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 22:00", grupo: "Quartas", estadio: "Arrowhead Stadium, Kansas City",      data_iso: "2026-07-11", round: "Quarter-finals" },
+{ id: "qua-1", time_a: "V oit-2", time_b: "V oit-1", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "09/07 18:00", grupo: "Quartas", estadio: "Gillette Stadium, Foxborough",        data_iso: "2026-07-09", round: "Quarter-finals" },
+{ id: "qua-2", time_a: "V oit-5", time_b: "V oit-6", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "10/07 22:00", grupo: "Quartas", estadio: "SoFi Stadium, Inglewood",             data_iso: "2026-07-10", round: "Quarter-finals" },
+{ id: "qua-3", time_a: "V oit-3", time_b: "V oit-4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 17:00", grupo: "Quartas", estadio: "Hard Rock Stadium, Miami Gardens",    data_iso: "2026-07-11", round: "Quarter-finals" },
+{ id: "qua-4", time_a: "V oit-7", time_b: "V oit-8", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 22:00", grupo: "Quartas", estadio: "AT&T Stadium, Arlington",             data_iso: "2026-07-11", round: "Quarter-finals" },
 ];
 
 export const JOGOS_SEMI = [
-{ id: "sem-1", time_a: "V Qua1", time_b: "V Qua2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "14/07 16:00", grupo: "Semi", estadio: "AT&T Stadium, Arlington",                data_iso: "2026-07-14", round: "Semi-finals" },
-{ id: "sem-2", time_a: "V Qua3", time_b: "V Qua4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "15/07 16:00", grupo: "Semi", estadio: "MetLife Stadium, East Rutherford",       data_iso: "2026-07-15", round: "Semi-finals" },
+{ id: "sem-1", time_a: "V qua-1", time_b: "V qua-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "14/07 21:00", grupo: "Semi", estadio: "AT&T Stadium, Arlington",                data_iso: "2026-07-14", round: "Semi-finals" },
+{ id: "sem-2", time_a: "V qua-3", time_b: "V qua-4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "15/07 21:00", grupo: "Semi", estadio: "Mercedes-Benz Stadium, Atlanta",         data_iso: "2026-07-15", round: "Semi-finals" },
 ];
 
 export const JOGOS_FINAL = [
-{ id: "fin-1", time_a: "V Sem1", time_b: "V Sem2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "19/07 16:00", grupo: "Final", estadio: "MetLife Stadium, East Rutherford",       data_iso: "2026-07-19", round: "Final" },
+{ id: "fin-1", time_a: "V sem-1", time_b: "V sem-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "19/07 16:00", grupo: "Final", estadio: "MetLife Stadium, East Rutherford",       data_iso: "2026-07-19", round: "Final" },
 ];
 
-export const JOGOS_TODOS = [...JOGOS_GRUPOS, ...JOGOS_1_16, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL];
+export const JOGOS_TERCEIRO = [
+{ id: "ter-1", time_a: "V sem-1", time_b: "V sem-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "18/07 16:00", grupo: "3º Lugar", estadio: "MetLife Stadium, East Rutherford",       data_iso: "2026-07-18", round: "Third-place" },
+];
+
+export const JOGOS_TODOS = [...JOGOS_GRUPOS, ...JOGOS_1_16, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL, ...JOGOS_TERCEIRO];
 
 export const TODOS_TIMES = [
-"Alemanha","Argentina","Argélia","Arábia Saudita","Austrália","Bosnia & Herzegovina","Brasil","Bélgica","Cabo Verde","Canadá","Colômbia","Coreia do Sul","Costa do Marfim","Croácia","Curaçao","Egito","Equador","Escócia","Espanha","Estados Unidos","França","Gana","Haiti","Holanda","Inglaterra","Iraque","Irã","Japão","Jordânia","Marrocos","México","Noruega","Nova Zelândia","Panamá","Paraguai","Portugal","Qatar","RD Congo","República Tcheca","Senegal","Suíça","Suécia","Tunísia","Turquia","Uruguai","Uzbequistão","África do Sul","Áustria",
+"Alemanha","Argentina","Argélia","Arábia Saudita","Austrália","Bósnia e Herzegovina","Brasil","Bélgica","Cabo Verde","Canadá","Colômbia","Coreia do Sul","Costa do Marfim","Croácia","Curaçao","Egito","Equador","Escócia","Espanha","Estados Unidos","França","Gana","Haiti","Holanda","Inglaterra","Iraque","Irã","Japão","Jordânia","Marrocos","México","Noruega","Nova Zelândia","Panamá","Paraguai","Portugal","Qatar","RD Congo","República Tcheca","Senegal","Suíça","Suécia","Tunísia","Turquia","Uruguai","Uzbequistão","África do Sul","Áustria",
 ];
 
 export const ISO = {
 México: "mx", "África do Sul": "za", "Coreia do Sul": "kr", "República Tcheca": "cz",
-Canadá: "ca", "Bosnia & Herzegovina": "ba", Qatar: "qa", Suíça: "ch",
+Canadá: "ca", "Bósnia e Herzegovina": "ba", Qatar: "qa", Suíça: "ch",
 Brasil: "br", Marrocos: "ma", Escócia: "gb-sct", Haiti: "ht",
 "Estados Unidos": "us", Turquia: "tr", Austrália: "au", Paraguai: "py",
 Alemanha: "de", "Costa do Marfim": "ci", Equador: "ec", Curaçao: "cw",
-Japão: "jp", Tunísia: "tn", Holanda: "nl", Suécia: "se",
+Japão: "jp", Tunísia: "tn", "Holanda": "nl", Suécia: "se",
 Bélgica: "be", Egito: "eg", "Nova Zelândia": "nz", Irã: "ir",
 Espanha: "es", "Arábia Saudita": "sa", Uruguai: "uy", "Cabo Verde": "cv",
 França: "fr", Iraque: "iq", Noruega: "no", Senegal: "sn",
@@ -225,10 +219,10 @@ export const ALIASES_TIMES = {
 "tunisia": "Tunísia",
 "qatar": "Qatar",
 "saudi arabia": "Arábia Saudita",
-"bosnia": "Bosnia & Herzegovina",
-"bosnia and herzegovina": "Bosnia & Herzegovina",
-"bosnia & herzegovina": "Bosnia & Herzegovina",
-"bosnia-herzegovina": "Bosnia & Herzegovina",
+"bosnia": "Bósnia e Herzegovina",
+"bosnia and herzegovina": "Bósnia e Herzegovina",
+"bosnia & herzegovina": "Bósnia e Herzegovina",
+"bosnia-herzegovina": "Bósnia e Herzegovina",
 "cabo verde": "Cabo Verde",
 "cape verde": "Cabo Verde",
 "cape verde islands": "Cabo Verde",

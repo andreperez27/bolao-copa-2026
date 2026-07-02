@@ -1,15 +1,14 @@
 import {
-  JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL,
-  JOGOS_GRUPOS,
+  JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL, JOGOS_TERCEIRO,
 } from "../services/jogos";
-import { calcularGrupo } from "./standings";
-import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, R32_MAPPING } from "./bracketMapping";
+import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, TERCEIRO_MAPPING } from "./bracketMapping";
 
 const ALL_MAPPINGS = {
   oit: OITAVAS_MAPPING,
   qua: QUARTAS_MAPPING,
   sem: SEMI_MAPPING,
   fin: FINAL_MAPPING,
+  ter: TERCEIRO_MAPPING,
 };
 
 const jogosOriginais = {};
@@ -18,6 +17,7 @@ for (const j of JOGOS_OITAVAS) jogosOriginais[j.id] = j;
 for (const j of JOGOS_QUARTAS) jogosOriginais[j.id] = j;
 for (const j of JOGOS_SEMI) jogosOriginais[j.id] = j;
 for (const j of JOGOS_FINAL) jogosOriginais[j.id] = j;
+for (const j of JOGOS_TERCEIRO) jogosOriginais[j.id] = j;
 
 export function getDependentes(jogoId) {
   const all = Object.values(ALL_MAPPINGS).flat();
@@ -34,7 +34,12 @@ export function getPlacarReal(resultados, matchId) {
   const ga = Number(r.placar_a);
   const gb = Number(r.placar_b);
   if (isNaN(ga) || isNaN(gb)) return null;
-  return { ga, gb };
+  const res = { ga, gb };
+  if (r.pen_a != null) res.pen_a = Number(r.pen_a);
+  if (r.pen_b != null) res.pen_b = Number(r.pen_b);
+  if (r.pro_a != null) res.pro_a = Number(r.pro_a);
+  if (r.pro_b != null) res.pro_b = Number(r.pro_b);
+  return res;
 }
 
 export function getVencedorReal(resultados, matchId) {
@@ -42,17 +47,19 @@ export function getVencedorReal(resultados, matchId) {
   if (!placar) return null;
   if (placar.ga > placar.gb) return "time_a";
   if (placar.gb > placar.ga) return "time_b";
+  // empate — verificar prorrogação
+  if (placar.pro_a != null && placar.pro_b != null && placar.pro_a !== placar.pro_b) {
+    return placar.pro_a > placar.pro_b ? "time_a" : "time_b";
+  }
+  // empate — verificar pênaltis
+  if (placar.pen_a != null && placar.pen_b != null && placar.pen_a !== placar.pen_b) {
+    return placar.pen_a > placar.pen_b ? "time_a" : "time_b";
+  }
   return null;
 }
 
 export function isFinalizado(resultados, matchId) {
   return getPlacarReal(resultados, matchId) !== null;
-}
-
-function timeNaPosicao(grupoLetra, pos, resultados) {
-  const data = calcularGrupo(grupoLetra, resultados);
-  const t = data?.find(x => x.position === pos);
-  return t ? t.time : null;
 }
 
 function vencedorParaNome(team1, team2, lado) {
@@ -68,36 +75,21 @@ export function resolveInteractiveBracket(resultados, escolhas) {
 
   function vencedorEfetivo(match) {
     if (travado(match.id)) {
-      return vencedorParaNome(match.team1, match.team2, vencedorReal(match.id));
+      const real = vencedorReal(match.id);
+      if (real) return vencedorParaNome(match.team1, match.team2, real);
+      // empate no tempo normal sem definição — usar escolha do usuário
     }
     return vencedorParaNome(match.team1, match.team2, escolhas[match.id]);
   }
 
   const winnerMap = {};
 
-  const r32 = R32_MAPPING.map(m => {
-    const orig = jogosOriginais[m.id];
-    let team1 = orig ? orig.time_a : null;
-    let team2 = orig ? orig.time_b : null;
-    if (m.slot1?.grupo) {
-      team1 = timeNaPosicao(m.slot1.grupo, m.slot1.pos, resultados) || team1;
-    }
-    if (m.type === "A" && m.slot2?.grupo) {
-      team2 = timeNaPosicao(m.slot2.grupo, m.slot2.pos, resultados) || team2;
-    }
-    if (m.type === "B" && m.slot2?.pool) {
-      const allStandings = "ABCDEFGHIJKL".split("").map(g => ({ grupo: g, times: calcularGrupo(g, resultados) }));
-      const thirdRanked = allStandings
-        .map(s => ({ grupo: s.grupo, third: s.times?.find(x => x.position === 3) }))
-        .filter(x => x.third)
-        .sort((a, b) => (b.third?.PTS || 0) - (a.third?.PTS || 0) || (b.third?.SG || 0) - (a.third?.SG || 0) || (b.third?.GP || 0) - (a.third?.GP || 0));
-      const eligible = thirdRanked.filter(t => m.slot2.pool.includes(t.grupo));
-      const best = eligible[Math.floor(m.slot2.pos === 3 ? 0 : 0)];
-      if (best) team2 = best.third.time;
-    }
-    const match = { id: m.id, team1, team2, result: placarReal(m.id), winner: null, travado: travado(m.id) };
+  const r32 = JOGOS_1_16.map(j => {
+    const team1 = j.time_a;
+    const team2 = j.time_b;
+    const match = { id: j.id, team1, team2, candidates: null, result: placarReal(j.id), winner: null, travado: travado(j.id) };
     match.winner = vencedorEfetivo(match);
-    winnerMap[m.id] = match.winner;
+    winnerMap[j.id] = match.winner;
     return match;
   });
 
@@ -113,11 +105,32 @@ export function resolveInteractiveBracket(resultados, escolhas) {
     });
   }
 
+  const oit = resolvePhase(OITAVAS_MAPPING);
+  const qua = resolvePhase(QUARTAS_MAPPING);
+  const sem = resolvePhase(SEMI_MAPPING);
+  const fin = resolvePhase(FINAL_MAPPING);
+
+  const ter = TERCEIRO_MAPPING.map(m => {
+    const sem1 = sem.find(s => s.id === m.slot1.match);
+    const sem2 = sem.find(s => s.id === m.slot2.match);
+    const team1 = sem1 && sem1.winner && sem1.team1 && sem1.team2
+      ? (sem1.winner === sem1.team1 ? sem1.team2 : sem1.team1)
+      : null;
+    const team2 = sem2 && sem2.winner && sem2.team1 && sem2.team2
+      ? (sem2.winner === sem2.team1 ? sem2.team2 : sem2.team1)
+      : null;
+    const match = { id: m.id, team1, team2, candidates: null, result: placarReal(m.id), winner: null, travado: travado(m.id) };
+    match.winner = vencedorEfetivo(match);
+    winnerMap[m.id] = match.winner;
+    return match;
+  });
+
   return {
     r32,
-    oit: resolvePhase(OITAVAS_MAPPING),
-    qua: resolvePhase(QUARTAS_MAPPING),
-    sem: resolvePhase(SEMI_MAPPING),
-    fin: resolvePhase(FINAL_MAPPING),
+    oit,
+    qua,
+    sem,
+    fin,
+    ter,
   };
 }

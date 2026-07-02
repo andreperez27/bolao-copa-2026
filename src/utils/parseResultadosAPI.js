@@ -27,10 +27,16 @@ function lerTimes(m) {
   ];
 }
 
-function lerPlacar(m) {
-  if (m.score && m.score.ft && Array.isArray(m.score.ft) && m.score.ft.length === 2) {
-    return [m.score.ft[0], m.score.ft[1]];
+function lerScore(m, key) {
+  if (m.score && m.score[key] && Array.isArray(m.score[key]) && m.score[key].length === 2) {
+    return [m.score[key][0], m.score[key][1]];
   }
+  return null;
+}
+
+function lerPlacar(m) {
+  var ft = lerScore(m, "ft");
+  if (ft) return ft;
   if (m.score_home !== undefined) return [m.score_home, m.score_away];
   var ga = m.home_score !== undefined ? m.home_score :
            m.goals_home !== undefined ? m.goals_home :
@@ -76,7 +82,13 @@ export function parseResultadosDeAPI(data) {
         (jA.includes(aLow) || aLow.includes(jA)) &&
         (jB.includes(bLow) || bLow.includes(jB))
       ) {
+        var pro = lerScore(m, "et");
+        var pen = lerScore(m, "pen");
         novos[j.id] = { placar_a: Number(ga), placar_b: Number(gb) };
+        if (pro) novos[j.id].pro_a = Number(pro[0]);
+        if (pro) novos[j.id].pro_b = Number(pro[1]);
+        if (pen) novos[j.id].pen_a = Number(pen[0]);
+        if (pen) novos[j.id].pen_b = Number(pen[1]);
       }
     });
   });

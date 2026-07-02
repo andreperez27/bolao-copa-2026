@@ -1,93 +1,44 @@
-import { allGroupsFinished, calcularGrupo } from "./standings";
-import { calculateThirdPlaceRanking, getThirdPlaceSlots } from "./thirdPlace";
-import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING } from "./bracketMapping";
-
-function getGroupTeam(grupo, pos, standings) {
-  const groupData = standings.find(s => s.grupo === grupo);
-  if (!groupData) return null;
-  return groupData.times.find(t => t.position === pos) || null;
-}
-
-function resolveThirdPlacePool(pool, thirdSlots) {
-  if (!thirdSlots.length) return null;
-  const eligible = thirdSlots.filter(t => pool.includes(t.grupo));
-  if (!eligible.length) return null;
-  return eligible.sort((a, b) => a.rank - b.rank)[0];
-}
-
-function resolveThirdPlaceMatchup(slot1, slot2, thirdSlots) {
-  const pool1 = slot1.pool;
-  const pool2 = slot2.pool;
-  const used = new Set();
-  let team1 = null, team2 = null;
-
-  if (pool1) {
-    const eligible = thirdSlots.filter(t => pool1.includes(t.grupo) && !used.has(t.grupo));
-    const best = eligible.sort((a, b) => a.rank - b.rank)[0];
-    if (best) { team1 = best; used.add(best.grupo); }
-  }
-  if (pool2) {
-    const eligible = thirdSlots.filter(t => pool2.includes(t.grupo) && !used.has(t.grupo));
-    const best = eligible.sort((a, b) => a.rank - b.rank)[0];
-    if (best) { team2 = best; used.add(best.grupo); }
-  }
-
-  if (team1 && team2) return { team1, team2 };
-  return null;
-}
+import { JOGOS_1_16 } from "../services/jogos";
+import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, TERCEIRO_MAPPING } from "./bracketMapping";
 
 function getMatchResult(matchId, resultados) {
   const res = resultados?.[matchId];
   if (!res || res.placar_a == null || res.placar_b == null) return null;
   const ga = Number(res.placar_a), gb = Number(res.placar_b);
-  if (ga === gb) return null;
-  return { winner: ga > gb ? "team1" : "team2", ga, gb };
+
+  // vitória no tempo normal
+  if (ga !== gb) return { winner: ga > gb ? "team1" : "team2", ga, gb };
+
+  // empate — verificar prorrogação
+  if (res.pro_a != null && res.pro_b != null) {
+    const pa = Number(res.pro_a), pb = Number(res.pro_b);
+    if (pa !== pb) return { winner: pa > pb ? "team1" : "team2", ga, gb, pro_a: pa, pro_b: pb };
+  }
+
+  // empate — verificar pênaltis
+  if (res.pen_a != null && res.pen_b != null) {
+    const pa = Number(res.pen_a), pb = Number(res.pen_b);
+    if (pa !== pb) return { winner: pa > pb ? "team1" : "team2", ga, gb, pen_a: pa, pen_b: pb };
+  }
+
+  return null; // empate sem definição
 }
 
 export function getKnockoutState(resultados) {
-  const letras = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
-  const standings = letras.map(letra => ({ grupo: letra, times: calcularGrupo(letra, resultados) }));
-
-  const groupsFinished = allGroupsFinished(resultados);
-  const thirdData = calculateThirdPlaceRanking(resultados);
-  const thirdSlots = groupsFinished ? getThirdPlaceSlots(resultados) : [];
-
   const resolvedR32 = {};
 
-  for (const m of R32_MAPPING) {
-    let team1 = null, team2 = null;
-    let team1Confirmed = false, team2Confirmed = false;
-    let unlocked = false;
-
-    if (m.type === "A") {
-      const t1 = getGroupTeam(m.slot1.grupo, m.slot1.pos, standings);
-      const t2 = getGroupTeam(m.slot2.grupo, m.slot2.pos, standings);
-      if (t1) { team1 = t1.time; team1Confirmed = t1.confirmed; }
-      if (t2) { team2 = t2.time; team2Confirmed = t2.confirmed; }
-      if (t1?.confirmed && t2?.confirmed) unlocked = true;
-    } else {
-      if (groupsFinished && thirdSlots.length) {
-        const resolved = resolveThirdPlaceMatchup(m.slot1, m.slot2, thirdSlots);
-        if (resolved) {
-          team1 = resolved.team1.time;
-          team2 = resolved.team2.time;
-          team1Confirmed = true;
-          team2Confirmed = true;
-          unlocked = true;
-        }
-      }
-    }
-
-    const res = getMatchResult(m.id, resultados);
-
-    resolvedR32[m.id] = {
-      id: m.id,
-      team1: team1 || (m.slot1.grupo ? `${m.slot1.pos}º ${m.slot1.grupo}` : "3º a definir"),
-      team2: team2 || (m.type === "A" ? `${m.slot2.pos}º ${m.slot2.grupo}` : "3º a definir"),
-      team1Confirmed,
-      team2Confirmed,
-      unlocked,
-      type: m.type,
+  for (const j of JOGOS_1_16) {
+    const res = getMatchResult(j.id, resultados);
+    const team1 = j.time_a;
+    const team2 = j.time_b;
+    resolvedR32[j.id] = {
+      id: j.id,
+      team1,
+      team2,
+      team1Confirmed: true,
+      team2Confirmed: true,
+      unlocked: true,
+      type: "A",
       result: res,
       winner: res ? (res.winner === "team1" ? team1 : team2) : null,
     };
@@ -131,17 +82,46 @@ export function getKnockoutState(resultados) {
   const resolvedSemi = resolvePhase(SEMI_MAPPING, resolvedQuartas, "Semi");
   const resolvedFinal = resolvePhase(FINAL_MAPPING, resolvedSemi, "Final");
 
+  function getLoser(matchObj) {
+    if (!matchObj || !matchObj.winner || !matchObj.team1 || !matchObj.team2) return null;
+    return matchObj.winner === matchObj.team1 ? matchObj.team2 : matchObj.team1;
+  }
+
+  const resolvedTerceiro = {};
+  for (const m of TERCEIRO_MAPPING) {
+    const sem1 = resolvedSemi[m.slot1.match];
+    const sem2 = resolvedSemi[m.slot2.match];
+    const loser1 = getLoser(sem1);
+    const loser2 = getLoser(sem2);
+    const resolved = !!(loser1 && loser2);
+    const res = getMatchResult(m.id, resultados);
+    const matchWinner = res
+      ? (res.winner === "team1" ? loser1 : loser2)
+      : null;
+    resolvedTerceiro[m.id] = {
+      id: m.id,
+      team1: loser1,
+      team2: loser2,
+      team1Confirmed: !!loser1,
+      team2Confirmed: !!loser2,
+      unlocked: resolved,
+      result: res,
+      winner: matchWinner,
+    };
+  }
+
   return {
     r32: Object.values(resolvedR32).sort((a, b) => {
-      const order = R32_MAPPING.map(m => m.id);
+      const order = JOGOS_1_16.map(j => j.id);
       return order.indexOf(a.id) - order.indexOf(b.id);
     }),
     oitavas: Object.values(resolvedOitavas),
     quartas: Object.values(resolvedQuartas),
     semis: Object.values(resolvedSemi),
     final: Object.values(resolvedFinal),
-    groupsFinished,
-    thirdFinalized: thirdData.finalized,
-    standings,
+    terceiro: Object.values(resolvedTerceiro),
+    groupsFinished: false,
+    thirdFinalized: false,
+    standings: [],
   };
 }

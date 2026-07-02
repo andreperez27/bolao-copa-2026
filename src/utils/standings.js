@@ -85,8 +85,12 @@ export function calcularGrupo(grupoLetra, resultados) {
 }
 
 export function allGroupsFinished(resultados) {
+  // Guarda de segurança: fase de grupos termina em 27/06
+  if (new Date() < new Date('2026-06-29T03:00:00Z')) return false;
+
   return LETRAS.every(letra => {
     const jogos = JOGOS_GRUPOS.filter(j => j.grupo === `Grupo ${letra}`);
+    if (jogos.length !== 6) return false;
     return jogos.every(j => resultados?.[j.id]?.placar_a != null);
   });
 }

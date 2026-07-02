@@ -75,11 +75,10 @@ export function AdminPanel({
   }, []);
 
   const handleSalvarResultado = useCallback(
-    (jogoId, ga, gb) => {
-      const atualizado = {
-        ...resultadosEdit,
-        [jogoId]: { placar_a: Number(ga), placar_b: Number(gb) },
-      };
+    (jogoId, ga, gb, pen_a, pen_b) => {
+      const resultado = { placar_a: Number(ga), placar_b: Number(gb) };
+      if (pen_a !== "" && pen_b !== "") { resultado.pen_a = Number(pen_a); resultado.pen_b = Number(pen_b); }
+      const atualizado = { ...resultadosEdit, [jogoId]: resultado };
       setResultadosEdit(atualizado);
       onResultadosChange(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
       salvarAdminData(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit).catch(() => {});
@@ -96,7 +95,18 @@ export function AdminPanel({
       const novos = parseResultadosDeAPI(matches);
       const count = Object.keys(novos).length;
       if (count > 0) {
-        const mergeados = { ...resultadosEdit, ...novos };
+        const mergeados = { ...resultadosEdit };
+        for (const id of Object.keys(novos)) {
+          const velho = mergeados[id] || {};
+          const novo = novos[id];
+          mergeados[id] = { ...velho };
+          if (novo.placar_a !== undefined) mergeados[id].placar_a = novo.placar_a;
+          if (novo.placar_b !== undefined) mergeados[id].placar_b = novo.placar_b;
+          if (novo.pro_a !== undefined) mergeados[id].pro_a = novo.pro_a;
+          if (novo.pro_b !== undefined) mergeados[id].pro_b = novo.pro_b;
+          if (novo.pen_a !== undefined && velho.pen_a === undefined) mergeados[id].pen_a = novo.pen_a;
+          if (novo.pen_b !== undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
+        }
         setResultadosEdit(mergeados);
         onResultadosChange(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
         await salvarAdminData(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
@@ -405,7 +415,7 @@ export function AdminPanel({
           </select>
           {jogoSelecionado && (
             <FormResultadoAdmin
-              jogo={JOGOS_GRUPOS.find((j) => j.id === jogoSelecionado)}
+              jogo={JOGOS_TODOS.find((j) => j.id === jogoSelecionado)}
               resultadoSalvo={resultadosEdit[jogoSelecionado]}
               onSalvar={handleSalvarResultado}
             />
@@ -651,9 +661,13 @@ export function AdminPanel({
 function FormResultadoAdmin({ jogo, resultadoSalvo, onSalvar }) {
   const [ga, setGa] = React.useState(resultadoSalvo?.placar_a ?? "");
   const [gb, setGb] = React.useState(resultadoSalvo?.placar_b ?? "");
+  const [pen_a, setPen_a] = React.useState(resultadoSalvo?.pen_a ?? "");
+  const [pen_b, setPen_b] = React.useState(resultadoSalvo?.pen_b ?? "");
   React.useEffect(() => {
     setGa(resultadoSalvo?.placar_a ?? "");
     setGb(resultadoSalvo?.placar_b ?? "");
+    setPen_a(resultadoSalvo?.pen_a ?? "");
+    setPen_b(resultadoSalvo?.pen_b ?? "");
   }, [jogo?.id, resultadoSalvo]);
 
   if (!jogo) return null;
@@ -664,48 +678,20 @@ function FormResultadoAdmin({ jogo, resultadoSalvo, onSalvar }) {
         <span style={{ color: "#F0F4FF", flex: 1, textAlign: "right", fontWeight: 700 }}>
           {jogo.time_a}
         </span>
-        <input
-          type="number"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={ga}
-          onChange={(e) => setGa(e.target.value)}
-          style={{
-            width: 52,
-            textAlign: "center",
-            background: "#1a2234",
-            border: "2px solid #1E2A45",
-            borderRadius: 6,
-            color: "#F0F4FF",
-            padding: "6px 0",
-            fontSize: 18,
-            fontWeight: 800,
-          }}
-        />
+        <input type="number" inputMode="numeric" value={ga} onChange={(e) => setGa(e.target.value)} style={{ width: 52, textAlign: "center", background: "#1a2234", border: "2px solid #1E2A45", borderRadius: 6, color: "#F0F4FF", padding: "6px 0", fontSize: 18, fontWeight: 800 }} />
         <span style={{ color: "#8B9CC8" }}>{"×"}</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={gb}
-          onChange={(e) => setGb(e.target.value)}
-          style={{
-            width: 52,
-            textAlign: "center",
-            background: "#1a2234",
-            border: "2px solid #1E2A45",
-            borderRadius: 6,
-            color: "#F0F4FF",
-            padding: "6px 0",
-            fontSize: 18,
-            fontWeight: 800,
-          }}
-        />
+        <input type="number" inputMode="numeric" value={gb} onChange={(e) => setGb(e.target.value)} style={{ width: 52, textAlign: "center", background: "#1a2234", border: "2px solid #1E2A45", borderRadius: 6, color: "#F0F4FF", padding: "6px 0", fontSize: 18, fontWeight: 800 }} />
         <span style={{ color: "#F0F4FF", flex: 1, fontWeight: 700 }}>{jogo.time_b}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, justifyContent: "center" }}>
+        <span style={{ color: "#8B9CC8", fontSize: 11 }}>Pênaltis:</span>
+        <input type="number" inputMode="numeric" value={pen_a} onChange={(e) => setPen_a(e.target.value)} placeholder="-" style={{ width: 44, textAlign: "center", background: "#1a2234", border: "2px solid #1E2A45", borderRadius: 6, color: "#FF6B6B", padding: "4px 0", fontSize: 14, fontWeight: 700 }} />
+        <span style={{ color: "#8B9CC8", fontSize: 11 }}>{"×"}</span>
+        <input type="number" inputMode="numeric" value={pen_b} onChange={(e) => setPen_b(e.target.value)} placeholder="-" style={{ width: 44, textAlign: "center", background: "#1a2234", border: "2px solid #1E2A45", borderRadius: 6, color: "#FF6B6B", padding: "4px 0", fontSize: 14, fontWeight: 700 }} />
       </div>
       <Btn
         onClick={() => {
-          if (ga !== "" && gb !== "") onSalvar(jogo.id, ga, gb);
+          if (ga !== "" && gb !== "") onSalvar(jogo.id, ga, gb, pen_a, pen_b);
         }}
         cor="#16a34a"
         style={{ width: "100%" }}

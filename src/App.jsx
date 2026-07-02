@@ -16,6 +16,7 @@ import SimuladorPage from "./pages/SimuladorPage";
 import { ModalInstrucoes } from "./components/ModalInstrucoes";
 import { PrintArea } from "./components/PrintArea";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { UpdateBanner } from "./components/UpdateBanner";
 
 export default function App() {
   const navigate = useNavigate();
@@ -176,6 +177,7 @@ export default function App() {
   return (
     <>
       <OfflineBanner />
+      <UpdateBanner />
       <Routes>
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route

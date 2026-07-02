@@ -18,23 +18,31 @@ function Flag({ time, size = 14 }) {
 
 function isPlaceholder(name) {
   if (!name) return true;
-  return /^(\d+º|3º x|3º a definir|V\s|Vencedor|A definir)/.test(name);
+  return (
+    /^\d[ºo°]\s/i.test(name) ||
+    /^[Vv]\s?\d+/.test(name) ||
+    name === "A definir" ||
+    name === "3º a definir" ||
+    name.startsWith("Venc")
+  );
 }
 
-export default function BracketMatch({ match, jogoInfo, escolha, onEscolha, cardWidth = 170 }) {
+export default function BracketMatch({ match, jogoInfo, escolha, onEscolha, cardWidth = 170, onEscolhaTerceiro, terceiroEscolhido }) {
   if (!match) return null;
 
   const fScale = cardWidth / 180;
   const fontSize = (n) => n * fScale;
   const pad = (n) => Math.round(n * fScale);
 
-  const { team1, team2, result, travado, winner } = match;
-  const semTime1 = !team1 || isPlaceholder(team1);
-  const semTime2 = !team2 || isPlaceholder(team2);
+  const { team1, team2, result, travado, winner, candidates } = match;
+  const semTime1 = !team1;
+  const semTime2 = !team2;
   const slotVazio = semTime1 && semTime2;
+  const time1Placeholder = team1 && isPlaceholder(team1);
+  const time2Placeholder = team2 && isPlaceholder(team2);
   const temResultado = !!result;
-  const podeClicar = !travado && !slotVazio;
   const winnerName = winner;
+  const showCandidates = candidates?.length >= 2 && !terceiroEscolhido && !travado;
 
   function handleClick(lado) {
     if (!podeClicar) return;
@@ -42,10 +50,124 @@ export default function BracketMatch({ match, jogoInfo, escolha, onEscolha, card
     else onEscolha(lado);
   }
 
+  function handleCandidateClick(team) {
+    if (onEscolhaTerceiro) onEscolhaTerceiro(match.id, team);
+  }
+
+  const podeClicar = (!travado || !winner) && !slotVazio;
+
   const cardBorder =
     travado ? "#FFD700" :
     escolha ? "#22c55e" :
     "#1E2A45";
+
+  function renderSlot(time, lado, isCandidate = false) {
+    const isWinner = winnerName && winnerName === time;
+    const isSelected = escolha === lado;
+    const isDisabled = !time || isPlaceholder(time);
+    const flagSize = Math.round(12 * fScale);
+
+    return (
+      <div
+        onClick={() => handleClick(lado)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: `${pad(5)}px ${pad(6)}px`, margin: `0 -${pad(6)}px`, borderRadius: 6,
+          borderBottom: lado === "time_a" ? "1px solid rgba(30,42,69,0.4)" : "none",
+          cursor: podeClicar && !isDisabled ? "pointer" : "default",
+          background: isSelected ? "rgba(34,197,94,0.12)" : isWinner && travado ? "rgba(255,215,0,0.08)" : "transparent",
+          transition: "background 0.12s",
+        }}
+        onMouseEnter={(e) => {
+          if (podeClicar && !isDisabled && !isSelected)
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "transparent";
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: Math.round(5 * fScale), minWidth: 0, flex: 1 }}>
+          {time && !isPlaceholder(time) ? (
+            <Flag time={time} size={flagSize} />
+          ) : time ? (
+            <span style={{
+              width: Math.round(16 * fScale), height: Math.round(12 * fScale),
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: fontSize(8), opacity: 0.4, flexShrink: 0,
+            }}>?</span>
+          ) : (
+            <span style={{
+              width: Math.round(16 * fScale), height: Math.round(12 * fScale),
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: fontSize(8), opacity: 0.4, flexShrink: 0,
+            }}>⏳</span>
+          )}
+          <span style={{
+            fontSize: fontSize(11), fontWeight: isWinner || isSelected ? 700 : 500,
+            color: isSelected ? "#22c55e" : isWinner && travado ? "#FFD700" : isPlaceholder(time) ? "#4B5563" : "#F0F4FF",
+            fontStyle: isPlaceholder(time) ? "italic" : "normal",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            {time || (slotVazio ? "Aguardando..." : "A definir")}
+          </span>
+          {isSelected && <span style={{ fontSize: fontSize(9), color: "#22c55e", flexShrink: 0 }}>✓</span>}
+          {travado && isWinner && <span style={{ fontSize: fontSize(9), color: "#FFD700", flexShrink: 0 }}>🔒</span>}
+        </div>
+        {travado && temResultado ? (
+          <span style={{
+            fontSize: fontSize(13), fontWeight: 700, fontFamily: "monospace",
+            color: isWinner ? "#FFD700" : "#6b7280",
+            minWidth: Math.round(16 * fScale), textAlign: "right", flexShrink: 0,
+            whiteSpace: "nowrap",
+          }}>
+            {lado === "time_a"
+              ? (result.pen_a != null ? <>{result.ga}<span style={{fontSize:fontSize(9),color:"#FFD700"}}>({result.pen_a})</span></> : result.ga)
+              : (result.pen_b != null ? <>{result.gb}<span style={{fontSize:fontSize(9),color:"#FFD700"}}>({result.pen_b})</span></> : result.gb)}
+          </span>
+        ) : (
+          <span style={{
+            fontSize: fontSize(11), fontWeight: 600,
+            color: isSelected ? "#22c55e" : "#4B5563",
+            minWidth: Math.round(16 * fScale), textAlign: "right", flexShrink: 0,
+          }}>
+            {isSelected || (travado && isWinner) ? "●" : "-"}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  function renderCandidateSlot(team, idx) {
+    const flagSize = Math.round(12 * fScale);
+    return (
+      <div key={idx}
+        onClick={() => handleCandidateClick(team)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: `${pad(5)}px ${pad(6)}px`, margin: `0 -${pad(6)}px`, borderRadius: 6,
+          cursor: "pointer",
+          background: "transparent",
+          transition: "background 0.12s",
+          borderTop: idx > 0 ? "1px dashed rgba(30,42,69,0.3)" : "none",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.08)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: Math.round(5 * fScale), minWidth: 0, flex: 1 }}>
+          <Flag time={team} size={flagSize} />
+          <span style={{
+            fontSize: fontSize(11), fontWeight: 500, color: "#93C5FD",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            {team}
+          </span>
+          <span style={{ fontSize: fontSize(8), color: "#60A5FA", flexShrink: 0, marginLeft: "auto" }}>
+            Escolher
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -69,76 +191,18 @@ export default function BracketMatch({ match, jogoInfo, escolha, onEscolha, card
         </div>
       )}
 
-      {[team1, team2].map((time, i) => {
-        const lado = i === 0 ? "time_a" : "time_b";
-        const isWinner = winnerName && winnerName === time;
-        const isSelected = escolha === lado;
-        const isDisabled = !time || isPlaceholder(time);
-        const flagSize = Math.round(12 * fScale);
+      {renderSlot(team1, "time_a")}
 
-        return (
-          <div
-            key={i}
-            onClick={() => handleClick(lado)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: `${pad(5)}px ${pad(6)}px`, margin: `0 -${pad(6)}px`, borderRadius: 6,
-              borderBottom: i === 0 ? "1px solid rgba(30,42,69,0.4)" : "none",
-              cursor: podeClicar && !isDisabled ? "pointer" : "default",
-              background: isSelected ? "rgba(34,197,94,0.12)" : isWinner && travado ? "rgba(255,215,0,0.08)" : "transparent",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              if (podeClicar && !isDisabled && !isSelected)
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: Math.round(5 * fScale), minWidth: 0, flex: 1 }}>
-              {time && !isPlaceholder(time) ? (
-                <Flag time={time} size={flagSize} />
-              ) : (
-                <span style={{
-                  width: Math.round(16 * fScale), height: Math.round(12 * fScale),
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: fontSize(8), opacity: 0.4, flexShrink: 0,
-                }}>
-                  {slotVazio ? "⏳" : "?"}
-                </span>
-              )}
-              <span style={{
-                fontSize: fontSize(11), fontWeight: isWinner || isSelected ? 700 : 500,
-                color: isSelected ? "#22c55e" : isWinner && travado ? "#FFD700" : isPlaceholder(time) ? "#4B5563" : "#F0F4FF",
-                fontStyle: isPlaceholder(time) ? "italic" : "normal",
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>
-                {time || (slotVazio ? "Aguardando..." : "A definir")}
-              </span>
-              {isSelected && <span style={{ fontSize: fontSize(9), color: "#22c55e", flexShrink: 0 }}>✓</span>}
-              {travado && isWinner && <span style={{ fontSize: fontSize(9), color: "#FFD700", flexShrink: 0 }}>🔒</span>}
-            </div>
-            {travado && temResultado ? (
-              <span style={{
-                fontSize: fontSize(13), fontWeight: 700, fontFamily: "monospace",
-                color: isWinner ? "#FFD700" : "#6b7280",
-                minWidth: Math.round(16 * fScale), textAlign: "right", flexShrink: 0,
-              }}>
-                {i === 0 ? result.ga : result.gb}
-              </span>
-            ) : (
-              <span style={{
-                fontSize: fontSize(11), fontWeight: 600,
-                color: isSelected ? "#22c55e" : "#4B5563",
-                minWidth: Math.round(16 * fScale), textAlign: "right", flexShrink: 0,
-              }}>
-                {isSelected || (travado && isWinner) ? "●" : "-"}
-              </span>
-            )}
+      {showCandidates ? (
+        <div style={{ borderTop: "1px dashed rgba(30,42,69,0.3)", marginTop: pad(2), paddingTop: pad(2) }}>
+          <div style={{ fontSize: fontSize(8), color: "#60A5FA", fontWeight: 600, marginBottom: pad(2), textAlign: "center" }}>
+            ↓ 3º lugar (escolha)
           </div>
-        );
-      })}
+          {candidates.map((team, idx) => renderCandidateSlot(team, idx))}
+        </div>
+      ) : (
+        renderSlot(team2, "time_b")
+      )}
     </div>
   );
 }

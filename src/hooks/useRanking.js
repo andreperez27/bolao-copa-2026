@@ -33,7 +33,19 @@ export function useRanking() {
       const novos = parseResultadosDeAPI(data);
       const count = Object.keys(novos).length;
       if (count > 0) {
-        const mergeados = { ...resultadosRef.current, ...novos };
+        const mergeados = {};
+        const chaves = new Set([...Object.keys(resultadosRef.current), ...Object.keys(novos)]);
+        for (const id of chaves) {
+          const velho = resultadosRef.current[id] || {};
+          const novo = novos[id] || {};
+          mergeados[id] = { ...velho };
+          if (novo.placar_a !== undefined) mergeados[id].placar_a = novo.placar_a;
+          if (novo.placar_b !== undefined) mergeados[id].placar_b = novo.placar_b;
+          if (novo.pro_a !== undefined) mergeados[id].pro_a = novo.pro_a;
+          if (novo.pro_b !== undefined) mergeados[id].pro_b = novo.pro_b;
+          if (novo.pen_a !== undefined && velho.pen_a === undefined) mergeados[id].pen_a = novo.pen_a;
+          if (novo.pen_b !== undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
+        }
         setResultados(mergeados);
         salvarAdminData(mergeados, campeoRef.current).catch(() => {});
         setUltimaAtualizacao(new Date());
@@ -63,7 +75,6 @@ export function useRanking() {
 
   useEffect(() => {
     const url = config.api_url || API_URL_PADRAO;
-    autoFetchResultados(url);
     const id = setInterval(() => autoFetchResultados(url), 120000);
     return () => clearInterval(id);
   }, [config.api_url, autoFetchResultados]);
