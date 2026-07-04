@@ -75,13 +75,18 @@ export function AdminPanel({
   }, []);
 
   const handleSalvarResultado = useCallback(
-    (jogoId, ga, gb, pen_a, pen_b) => {
+    async (jogoId, ga, gb, pen_a, pen_b) => {
       const resultado = { placar_a: Number(ga), placar_b: Number(gb) };
       if (pen_a !== "" && pen_b !== "") { resultado.pen_a = Number(pen_a); resultado.pen_b = Number(pen_b); }
       const atualizado = { ...resultadosEdit, [jogoId]: resultado };
-      setResultadosEdit(atualizado);
-      onResultadosChange(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
-      salvarAdminData(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit).catch(() => {});
+      try {
+        await salvarAdminData(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
+        setResultadosEdit(atualizado);
+        onResultadosChange(atualizado, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
+      } catch (e) {
+        console.error("Erro ao salvar resultado:", e);
+        alert("Erro ao salvar resultado. Tente novamente.");
+      }
     },
     [resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit, onResultadosChange]
   );
