@@ -59,7 +59,12 @@ export function getKnockoutState(resultados) {
       if (slot.pool.length === 1) {
         const teams = groupTeams[slot.pool[0]];
         if (!teams || teams.length < 3) return null;
-        return teams[2] || null;
+        const t3 = teams[2];
+        if (!t3) return null;
+        if (thirdPlaceRanking.length > 0) {
+          return thirdPlaceRanking.find(t => t.time === t3) ? t3 : null;
+        }
+        return t3;
       }
       const candidates = thirdPlaceRanking.filter(t => slot.pool.includes(t.grupo));
       if (candidates.length > 0) return candidates[0].time;
