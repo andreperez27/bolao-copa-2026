@@ -1,75 +1,96 @@
 import { JOGOS_1_16 } from "../services/jogos";
-import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, TERCEIRO_MAPPING } from "./bracketMapping";
+import { R32_MAPPING, OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, TERCEIRO_MAPPING } from "./bracketMapping";
+import { getStandingsForAllGroups } from "./standings";
+import { calculateThirdPlaceRanking } from "./thirdPlace";
 
 function getMatchResult(matchId, resultados) {
   const res = resultados?.[matchId];
   if (!res || res.placar_a == null || res.placar_b == null) return null;
   const ga = Number(res.placar_a), gb = Number(res.placar_b);
 
-  // vitória no tempo normal
   if (ga !== gb) return { winner: ga > gb ? "team1" : "team2", ga, gb };
 
-  // empate — verificar prorrogação
   if (res.pro_a != null && res.pro_b != null) {
     const pa = Number(res.pro_a), pb = Number(res.pro_b);
     if (pa !== pb) return { winner: pa > pb ? "team1" : "team2", ga, gb, pro_a: pa, pro_b: pb };
   }
 
-  // empate — verificar pênaltis
   if (res.pen_a != null && res.pen_b != null) {
     const pa = Number(res.pen_a), pb = Number(res.pen_b);
     if (pa !== pb) return { winner: pa > pb ? "team1" : "team2", ga, gb, pen_a: pa, pen_b: pb };
   }
 
-  return null; // empate sem definição
+  return null;
 }
 
 export function getKnockoutState(resultados) {
-  const resolvedR32 = {};
+  const allStandings = getStandingsForAllGroups(resultados);
+  const groupTeams = {};
+  for (const g of allStandings) {
+    groupTeams[g.grupo] = g.times.map(t => t.time);
+  }
 
-  for (const j of JOGOS_1_16) {
-    const res = getMatchResult(j.id, resultados);
-    const team1 = j.time_a;
-    const team2 = j.time_b;
-    resolvedR32[j.id] = {
-      id: j.id,
+  const thirdPlaceData = calculateThirdPlaceRanking(resultados);
+  const thirdPlaceRanking = thirdPlaceData.finalized ? thirdPlaceData.ranking : [];
+
+  function resolveSlot(slot) {
+    if (slot.grupo) {
+      const teams = groupTeams[slot.grupo];
+      if (!teams || teams.length < slot.pos) return null;
+      return teams[slot.pos - 1] || null;
+    }
+    if (slot.pool && slot.pos === 3) {
+      if (slot.pool.length === 1) {
+        const teams = groupTeams[slot.pool[0]];
+        if (!teams || teams.length < 3) return null;
+        return teams[2] || null;
+      }
+      const candidates = thirdPlaceRanking.filter(t => slot.pool.includes(t.grupo));
+      return candidates.length > 0 ? candidates[0].time : null;
+    }
+    return null;
+  }
+
+  const jogosOriginais1_16 = {};
+  for (const j of JOGOS_1_16) jogosOriginais1_16[j.id] = j;
+
+  const resolvedR32 = {};
+  for (const m of R32_MAPPING) {
+    const orig = jogosOriginais1_16[m.id];
+    const team1 = resolveSlot(m.slot1) || (orig?.time_a || null);
+    const team2 = resolveSlot(m.slot2) || (orig?.time_b || null);
+    const res = getMatchResult(m.id, resultados);
+    resolvedR32[m.id] = {
+      id: m.id,
       team1,
       team2,
-      team1Confirmed: true,
-      team2Confirmed: true,
-      unlocked: true,
-      type: "A",
+      team1Confirmed: !!team1,
+      team2Confirmed: !!team2,
+      unlocked: !!(team1 && team2),
       result: res,
       winner: res ? (res.winner === "team1" ? team1 : team2) : null,
     };
   }
 
-  function resolvePhase(mapping, prevPhase, _phaseLabel) {
+  function resolvePhase(mapping, prevPhase) {
     const result = {};
     for (const m of mapping) {
       const team1Ref = m.slot1.match ? prevPhase[m.slot1.match] : null;
       const team2Ref = m.slot2.match ? prevPhase[m.slot2.match] : null;
-
-      const winner1 = team1Ref?.winner || null;
-      const winner2 = team2Ref?.winner || null;
-
-      const resolved = team1Ref?.winner && team2Ref?.winner;
-      const unlocked = resolved;
-
+      const team1 = team1Ref?.winner || null;
+      const team2 = team2Ref?.winner || null;
+      const resolved = !!(team1 && team2);
       const res = getMatchResult(m.id, resultados);
       const matchWinner = res
-        ? (res.winner === "team1" ? winner1 : winner2)
+        ? (res.winner === "team1" ? team1 : team2)
         : null;
-
       result[m.id] = {
         id: m.id,
-        team1: winner1,
-        team2: winner2,
-        placeholder1: `Vencedor ${m.slot1.match || ""}`,
-        placeholder2: `Vencedor ${m.slot2.match || ""}`,
-        team1Confirmed: !!winner1,
-        team2Confirmed: !!winner2,
-        unlocked,
+        team1,
+        team2,
+        team1Confirmed: !!team1,
+        team2Confirmed: !!team2,
+        unlocked: resolved,
         result: res,
         winner: matchWinner,
       };
@@ -77,10 +98,10 @@ export function getKnockoutState(resultados) {
     return result;
   }
 
-  const resolvedOitavas = resolvePhase(OITAVAS_MAPPING, resolvedR32, "Oitavas");
-  const resolvedQuartas = resolvePhase(QUARTAS_MAPPING, resolvedOitavas, "Quartas");
-  const resolvedSemi = resolvePhase(SEMI_MAPPING, resolvedQuartas, "Semi");
-  const resolvedFinal = resolvePhase(FINAL_MAPPING, resolvedSemi, "Final");
+  const resolvedOitavas = resolvePhase(OITAVAS_MAPPING, resolvedR32);
+  const resolvedQuartas = resolvePhase(QUARTAS_MAPPING, resolvedOitavas);
+  const resolvedSemi = resolvePhase(SEMI_MAPPING, resolvedQuartas);
+  const resolvedFinal = resolvePhase(FINAL_MAPPING, resolvedSemi);
 
   function getLoser(matchObj) {
     if (!matchObj || !matchObj.winner || !matchObj.team1 || !matchObj.team2) return null;
@@ -120,8 +141,8 @@ export function getKnockoutState(resultados) {
     semis: Object.values(resolvedSemi),
     final: Object.values(resolvedFinal),
     terceiro: Object.values(resolvedTerceiro),
-    groupsFinished: false,
-    thirdFinalized: false,
-    standings: [],
+    groupsFinished: thirdPlaceData.finalized,
+    thirdFinalized: thirdPlaceData.finalized,
+    standings: allStandings,
   };
 }
