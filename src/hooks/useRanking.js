@@ -24,8 +24,14 @@ export function useRanking() {
 
   const resultadosRef = useRef({});
   const campeoRef = useRef("");
+  const viceRef = useRef("");
+  const artNomeRef = useRef("");
+  const artSelRef = useRef("");
   useEffect(() => { resultadosRef.current = resultados; }, [resultados]);
   useEffect(() => { campeoRef.current = campeoReal; }, [campeoReal]);
+  useEffect(() => { viceRef.current = viceCampeaoReal; }, [viceCampeaoReal]);
+  useEffect(() => { artNomeRef.current = artilheiroRealNome; }, [artilheiroRealNome]);
+  useEffect(() => { artSelRef.current = artilheiroRealSelecao; }, [artilheiroRealSelecao]);
 
   const autoFetchResultados = useCallback(async (url) => {
     try {
@@ -43,11 +49,11 @@ export function useRanking() {
           if (novo.placar_b !== undefined) mergeados[id].placar_b = novo.placar_b;
           if (novo.pro_a !== undefined) mergeados[id].pro_a = novo.pro_a;
           if (novo.pro_b !== undefined) mergeados[id].pro_b = novo.pro_b;
-          if (novo.pen_a !== undefined && velho.pen_a === undefined) mergeados[id].pen_a = novo.pen_a;
-          if (novo.pen_b !== undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
+          if (novo.pen_a !== undefined && velho.pen_a === undefined && velho.pen_b === undefined) mergeados[id].pen_a = novo.pen_a;
+          if (novo.pen_b !== undefined && velho.pen_a === undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
         }
         setResultados(mergeados);
-        salvarAdminData(mergeados, campeoRef.current).catch(() => {});
+        salvarAdminData(mergeados, campeoRef.current, viceRef.current, artNomeRef.current, artSelRef.current).catch(() => {});
         setUltimaAtualizacao(new Date());
       }
     } catch {}

@@ -128,8 +128,8 @@ export function AdminPanel({
           if (novo.placar_b !== undefined) mergeados[id].placar_b = novo.placar_b;
           if (novo.pro_a !== undefined) mergeados[id].pro_a = novo.pro_a;
           if (novo.pro_b !== undefined) mergeados[id].pro_b = novo.pro_b;
-          if (novo.pen_a !== undefined && velho.pen_a === undefined) mergeados[id].pen_a = novo.pen_a;
-          if (novo.pen_b !== undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
+          if (novo.pen_a !== undefined && velho.pen_a === undefined && velho.pen_b === undefined) mergeados[id].pen_a = novo.pen_a;
+          if (novo.pen_b !== undefined && velho.pen_a === undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
         }
         setResultadosEdit(mergeados);
         onResultadosChange(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
