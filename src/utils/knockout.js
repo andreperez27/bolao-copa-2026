@@ -33,6 +33,22 @@ export function getKnockoutState(resultados) {
   const thirdPlaceData = calculateThirdPlaceRanking(resultados);
   const thirdPlaceRanking = thirdPlaceData.finalized ? thirdPlaceData.ranking : [];
 
+  function resolvePoolTeams(poolGroups) {
+    const items = [];
+    for (const g of poolGroups) {
+      const raw = allStandings.find(s => s.grupo === g)?.times?.[2];
+      if (raw) items.push(raw);
+    }
+    if (items.length === 0) return null;
+    items.sort((a, b) => {
+      if (b.PTS !== a.PTS) return b.PTS - a.PTS;
+      if (b.SG !== a.SG) return b.SG - a.SG;
+      if (b.GP !== a.GP) return b.GP - a.GP;
+      return a.time.localeCompare(b.time, "pt-BR");
+    });
+    return items[0].time;
+  }
+
   function resolveSlot(slot) {
     if (slot.grupo) {
       const teams = groupTeams[slot.grupo];
@@ -46,7 +62,8 @@ export function getKnockoutState(resultados) {
         return teams[2] || null;
       }
       const candidates = thirdPlaceRanking.filter(t => slot.pool.includes(t.grupo));
-      return candidates.length > 0 ? candidates[0].time : null;
+      if (candidates.length > 0) return candidates[0].time;
+      return resolvePoolTeams(slot.pool);
     }
     return null;
   }
