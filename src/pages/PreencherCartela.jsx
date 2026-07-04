@@ -14,9 +14,8 @@ import {
   TODOS_TIMES,
 } from "../services/jogos";
 import { getFaseAtual, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
-import { calcularGrupo, allGroupsFinished } from "../utils/standings";
-import { calculateThirdPlaceRanking, getThirdPlaceSlots } from "../utils/thirdPlace";
-import { getKnockoutState } from "../utils/knockout";
+import { calcularGrupo } from "../utils/standings";
+import { resolveInteractiveBracket } from "../utils/bracket";
 import { isJogoBloqueado } from "../utils/datas";
 import { listarCartelasIA } from "../services/ia";
 import SugestoesIA from "../components/SugestoesIA";
@@ -49,7 +48,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     try { return LETRAS.map(letra => ({ grupo: letra, times: calcularGrupo(letra, resultados || {}) })); }
     catch { return []; }
   }, [resultados, LETRAS]);
-  const knockoutState = React.useMemo(() => getKnockoutState(resultados || {}), [resultados]);
+  const bracketData = React.useMemo(() => resolveInteractiveBracket(resultados || {}, {}), [resultados]);
 
   useEffect(() => {
     listarCartelasIA().then(setIaCartelas).catch(() => {});
@@ -161,7 +160,7 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
   };
 
   const jogosPorGrupo = (grupo) => {
-    const ks = knockoutState;
+    const bd = bracketData;
     const merge = (rawList, bracketList) => rawList.map(j => {
       const state = (bracketList || []).find(s => s.id === j.id) || {};
       const team1 = state.team1 || j.time_a;
@@ -177,11 +176,11 @@ export default function PreencherCartela({ cartela, resultados, config, onSalvar
     });
     if (grupo.startsWith("Grupo")) return JOGOS_GRUPOS.filter((j) => j.grupo === grupo);
     if (grupo === "Segunda Rodada") return JOGOS_1_16.map(j => ({ ...j, _unlocked: true }));
-    if (grupo === "Oitavas") return merge(JOGOS_OITAVAS, ks.oitavas);
-    if (grupo === "Quartas") return merge(JOGOS_QUARTAS, ks.quartas);
-    if (grupo === "Semi") return merge(JOGOS_SEMI, ks.semis);
-    if (grupo === "Final") return merge(JOGOS_FINAL, ks.final);
-    if (grupo === "3º Lugar") return merge(JOGOS_TERCEIRO, ks.terceiro);
+    if (grupo === "Oitavas") return merge(JOGOS_OITAVAS, bd?.oit || []);
+    if (grupo === "Quartas") return merge(JOGOS_QUARTAS, bd?.qua || []);
+    if (grupo === "Semi") return merge(JOGOS_SEMI, bd?.sem || []);
+    if (grupo === "Final") return merge(JOGOS_FINAL, bd?.fin || []);
+    if (grupo === "3º Lugar") return merge(JOGOS_TERCEIRO, bd?.ter || []);
     return [];
   };
 
