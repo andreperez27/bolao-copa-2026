@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
 import { StatusBadge } from "./StatusBadge";
 import { JOGOS_TODOS, JOGOS_GRUPOS, TODOS_TIMES } from "../services/jogos";
+import { resolveInteractiveBracket } from "../utils/bracket";
 import { salvarAdminData, salvarConfig, getConfig } from "../services/admin";
 import { listJogadores, deletarJogador } from "../services/jogadores";
 import { listarCartelasExcluidas, restaurarCartela, excluirCartelaDefinitivo } from "../services/cartelas";
@@ -51,6 +52,24 @@ export function AdminPanel({
       setBonusGeral(cfg.bonus_geral || 0);
     }).catch(() => {});
   }, []);
+
+  const bracketData = useMemo(() => resolveInteractiveBracket(resultados || {}, {}), [resultados]);
+  const resolvedTeams = useMemo(() => {
+    const map = {};
+    if (!bracketData) return map;
+    for (const phase of [bracketData.r32, bracketData.oit, bracketData.qua, bracketData.sem, bracketData.fin, bracketData.ter || []]) {
+      for (const m of phase) {
+        if (m.team1 && m.team2) map[m.id] = { time_a: m.team1, time_b: m.team2 };
+      }
+    }
+    return map;
+  }, [bracketData]);
+
+  const getTime = (j, side) => {
+    const resolved = resolvedTeams[j.id];
+    if (resolved && resolved[side]) return resolved[side];
+    return j[side];
+  };
 
   const carregarParticipantes = useCallback(async () => {
     setCarregandoPart(true);
@@ -409,20 +428,25 @@ export function AdminPanel({
             }}
           >
             <option value="">Selecione o jogo...</option>
-            {JOGOS_TODOS.map((j) => (
+            {JOGOS_TODOS.map((j) => {
+              const ta = getTime(j, "time_a");
+              const tb = getTime(j, "time_b");
+              return (
               <option key={j.id} value={j.id}>
-                {j.time_a} {"×"} {j.time_b} ({j.grupo})
+                {ta} {"×"} {tb} ({j.grupo})
                 {resultadosEdit[j.id]
                   ? ` \u2713 ${resultadosEdit[j.id].placar_a}-${resultadosEdit[j.id].placar_b}`
                   : ""}
               </option>
-            ))}
+            );
+            })}
           </select>
           {jogoSelecionado && (
             <FormResultadoAdmin
               jogo={JOGOS_TODOS.find((j) => j.id === jogoSelecionado)}
               resultadoSalvo={resultadosEdit[jogoSelecionado]}
               onSalvar={handleSalvarResultado}
+              getTime={getTime}
             />
           )}
         </Card>
@@ -663,7 +687,7 @@ export function AdminPanel({
   );
 }
 
-function FormResultadoAdmin({ jogo, resultadoSalvo, onSalvar }) {
+function FormResultadoAdmin({ jogo, resultadoSalvo, onSalvar, getTime }) {
   const [ga, setGa] = React.useState(resultadoSalvo?.placar_a ?? "");
   const [gb, setGb] = React.useState(resultadoSalvo?.placar_b ?? "");
   const [pen_a, setPen_a] = React.useState(resultadoSalvo?.pen_a ?? "");
@@ -681,12 +705,12 @@ function FormResultadoAdmin({ jogo, resultadoSalvo, onSalvar }) {
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <span style={{ color: "#F0F4FF", flex: 1, textAlign: "right", fontWeight: 700 }}>
-          {jogo.time_a}
+          {getTime ? getTime(jogo, "time_a") : jogo.time_a}
         </span>
         <input type="number" inputMode="numeric" value={ga} onChange={(e) => setGa(e.target.value)} style={{ width: 52, textAlign: "center", background: "#1a2234", border: "2px solid #1E2A45", borderRadius: 6, color: "#F0F4FF", padding: "6px 0", fontSize: 18, fontWeight: 800 }} />
         <span style={{ color: "#8B9CC8" }}>{"×"}</span>
         <input type="number" inputMode="numeric" value={gb} onChange={(e) => setGb(e.target.value)} style={{ width: 52, textAlign: "center", background: "#1a2234", border: "2px solid #1E2A45", borderRadius: 6, color: "#F0F4FF", padding: "6px 0", fontSize: 18, fontWeight: 800 }} />
-        <span style={{ color: "#F0F4FF", flex: 1, fontWeight: 700 }}>{jogo.time_b}</span>
+        <span style={{ color: "#F0F4FF", flex: 1, fontWeight: 700 }}>{getTime ? getTime(jogo, "time_b") : jogo.time_b}</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, justifyContent: "center" }}>
         <span style={{ color: "#8B9CC8", fontSize: 11 }}>Pênaltis:</span>
