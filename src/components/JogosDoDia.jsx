@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { JOGOS_TODOS, ISO } from "../services/jogos";
+import { resolveInteractiveBracket } from "../utils/bracket";
 
 function Flag({ time, size = 18 }) {
   const code = ISO[time];
@@ -44,6 +45,19 @@ export function JogosDoDia({ resultados, palpites }) {
     return () => clearInterval(id);
   }, []);
 
+  const bracketData = useMemo(() => resolveInteractiveBracket(resultados || {}, {}), [resultados]);
+
+  const resolvedTeams = useMemo(() => {
+    const map = {};
+    if (!bracketData) return map;
+    for (const phase of [bracketData.r32, bracketData.oit, bracketData.qua, bracketData.sem, bracketData.fin, bracketData.ter || []]) {
+      for (const m of phase) {
+        if (m.team1 && m.team2) map[m.id] = { time_a: m.team1, time_b: m.team2 };
+      }
+    }
+    return map;
+  }, [bracketData]);
+
   const { jogosHoje, proximoJogo } = useMemo(() => {
     const hoje = agora.toLocaleDateString("pt-BR", {
       timeZone: "America/Sao_Paulo",
@@ -70,6 +84,12 @@ export function JogosDoDia({ resultados, palpites }) {
 
     return { jogosHoje: jogosH, proximoJogo: prox };
   }, [agora]);
+
+  const getTime = (j, side) => {
+    const resolved = resolvedTeams[j.id];
+    if (resolved) return resolved[side];
+    return j[side];
+  };
 
   if (jogosHoje.length === 0) return null;
 
@@ -184,8 +204,8 @@ export function JogosDoDia({ resultados, palpites }) {
                     color: ok && Number(res.placar_a) > Number(res.placar_b)
                       ? "#FFD700" : "#F0F4FF",
                     textAlign: "right",
-                  }}>{j.time_a}</span>
-                  <Flag time={j.time_a} size={20} />
+                  }}>{getTime(j, "time_a")}</span>
+                  <Flag time={getTime(j, "time_a")} size={20} />
                 </div>
 
                 <div style={{ textAlign: "center", minWidth: 72 }}>
@@ -237,12 +257,12 @@ export function JogosDoDia({ resultados, palpites }) {
                 <div style={{
                   display: "flex", alignItems: "center", gap: 7,
                 }}>
-                  <Flag time={j.time_b} size={20} />
+                  <Flag time={getTime(j, "time_b")} size={20} />
                     <span style={{
                       fontSize: 13, fontWeight: 700,
                       color: ok && Number(res.placar_b) > Number(res.placar_a)
                         ? "#FFD700" : "#F0F4FF",
-                    }}>{j.time_b}</span>
+                    }}>{getTime(j, "time_b")}</span>
                   </div>
                 </div>
               {palpites?.[j.id] && (
