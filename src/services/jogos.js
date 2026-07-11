@@ -133,9 +133,9 @@ export const JOGOS_OITAVAS = [
 ];
 
 export const JOGOS_QUARTAS = [
-{ id: "qua-1", time_a: "V oit-2", time_b: "V oit-1", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "09/07 18:00", grupo: "Quartas", estadio: "Gillette Stadium, Foxborough",        data_iso: "2026-07-09", round: "Quarter-finals" },
-{ id: "qua-2", time_a: "V oit-5", time_b: "V oit-6", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "10/07 22:00", grupo: "Quartas", estadio: "SoFi Stadium, Inglewood",             data_iso: "2026-07-10", round: "Quarter-finals" },
-{ id: "qua-3", time_a: "V oit-3", time_b: "V oit-4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 17:00", grupo: "Quartas", estadio: "Hard Rock Stadium, Miami Gardens",    data_iso: "2026-07-11", round: "Quarter-finals" },
+{ id: "qua-1", time_a: "V oit-2", time_b: "V oit-1", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "09/07 17:00", grupo: "Quartas", estadio: "Gillette Stadium, Foxborough",        data_iso: "2026-07-09", round: "Quarter-finals" },
+{ id: "qua-2", time_a: "V oit-5", time_b: "V oit-6", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "10/07 16:00", grupo: "Quartas", estadio: "SoFi Stadium, Inglewood",             data_iso: "2026-07-10", round: "Quarter-finals" },
+{ id: "qua-3", time_a: "V oit-3", time_b: "V oit-4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 18:00", grupo: "Quartas", estadio: "Hard Rock Stadium, Miami Gardens",    data_iso: "2026-07-11", round: "Quarter-finals" },
 { id: "qua-4", time_a: "V oit-7", time_b: "V oit-8", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "11/07 22:00", grupo: "Quartas", estadio: "AT&T Stadium, Arlington",             data_iso: "2026-07-11", round: "Quarter-finals" },
 ];
 
