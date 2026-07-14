@@ -140,8 +140,8 @@ export const JOGOS_QUARTAS = [
 ];
 
 export const JOGOS_SEMI = [
-{ id: "sem-1", time_a: "V qua-1", time_b: "V qua-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "14/07 21:00", grupo: "Semi", estadio: "AT&T Stadium, Arlington",                data_iso: "2026-07-14", round: "Semi-finals" },
-{ id: "sem-2", time_a: "V qua-3", time_b: "V qua-4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "15/07 21:00", grupo: "Semi", estadio: "Mercedes-Benz Stadium, Atlanta",         data_iso: "2026-07-15", round: "Semi-finals" },
+{ id: "sem-1", time_a: "V qua-1", time_b: "V qua-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "14/07 16:00", grupo: "Semi", estadio: "AT&T Stadium, Arlington",                data_iso: "2026-07-14", round: "Semi-finals" },
+{ id: "sem-2", time_a: "V qua-3", time_b: "V qua-4", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "15/07 16:00", grupo: "Semi", estadio: "Mercedes-Benz Stadium, Atlanta",         data_iso: "2026-07-15", round: "Semi-finals" },
 ];
 
 export const JOGOS_FINAL = [
@@ -149,7 +149,7 @@ export const JOGOS_FINAL = [
 ];
 
 export const JOGOS_TERCEIRO = [
-{ id: "ter-1", time_a: "V sem-1", time_b: "V sem-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "18/07 16:00", grupo: "3º Lugar", estadio: "MetLife Stadium, East Rutherford",       data_iso: "2026-07-18", round: "Third-place" },
+{ id: "ter-1", time_a: "V sem-1", time_b: "V sem-2", placar_a: null, placar_b: null, status: "AGENDADO", horario_brasilia: "18/07 18:00", grupo: "3º Lugar", estadio: "MetLife Stadium, East Rutherford",       data_iso: "2026-07-18", round: "Third-place" },
 ];
 
 export const JOGOS_TODOS = [...JOGOS_GRUPOS, ...JOGOS_1_16, ...JOGOS_OITAVAS, ...JOGOS_QUARTAS, ...JOGOS_SEMI, ...JOGOS_FINAL, ...JOGOS_TERCEIRO];
