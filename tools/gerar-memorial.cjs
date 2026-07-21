@@ -502,6 +502,8 @@ html += '</div>\n';
 
 html += '</body>\n</html>\n';
 
-const outPath = path.join(__dirname, '..', 'tabela-copa-2026-final.html');
+const outPath = path.join(__dirname, '..', 'public', 'tabela-copa-2026-final.html');
+const outPathRoot = path.join(__dirname, '..', 'tabela-copa-2026-final.html');
 fs.writeFileSync(outPath, html);
+fs.writeFileSync(outPathRoot, html);
 console.log('Generated: ' + outPath + ' (' + (html.length/1024).toFixed(0) + ' KB)');
