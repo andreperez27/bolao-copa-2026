@@ -4,6 +4,17 @@ import {
   JOGOS_SEMI, JOGOS_FINAL, JOGOS_TERCEIRO, ISO,
 } from "../services/jogos";
 
+function formatMatchId(id) {
+  if (/^\d+$/.test(id)) return "J" + id;
+  const m = /^oit-(\d+)$/.exec(id);
+  if (m) return "Oit-J0" + m[1];
+  if (/^qua-(\d+)$/.exec(id)) return "Qua-J0" + /^qua-(\d+)$/.exec(id)[1];
+  if (/^sem-(\d+)$/.exec(id)) return "Sem-J0" + /^sem-(\d+)$/.exec(id)[1];
+  if (id === "fin-1") return "Fin-J01";
+  if (id === "ter-1") return "3o-J01";
+  return id;
+}
+
 function resolveVPlaceholder(val) {
   if (!val) return null;
   const found = /^V (\d+)$/.exec(val);
@@ -380,7 +391,7 @@ function KoJogo({ match, resultados, isFinal }) {
         color: "rgba(255,255,255,0.9)",
       }}>
         <div style={{ fontWeight: 700, letterSpacing: 0.5, lineHeight: 1.3 }}>
-          #{match.id} · {jogoData?.horario_brasilia || (locked ? "🔒 Aguardando..." : "")}
+          {formatMatchId(match.id)} · {jogoData?.horario_brasilia || (locked ? "🔒 Aguardando..." : "")}
         </div>
         {jogoData?.estadio && (
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", marginTop: 2, letterSpacing: 0.3, lineHeight: 1.2 }}>
