@@ -398,58 +398,96 @@ html += '</div>\n'; // grid
 html += '</div>\n'; // details content
 html += '</details>\n';
 
-// ---- 5. MATCH RESULTS (knockout) ----
-const phases = [
-  {title:'1/16 de Final',icon:'\u{26BD}',matches:R32.map(m => ({id:String(m[0]),ta:m[1],tb:m[2]}))},
-  {title:'Oitavas de Final',icon:'\u{26BD}',matches:[
-    {id:'oit-1',ta:'V 73',tb:'V 75'},{id:'oit-2',ta:'V 74',tb:'V 77'},
-    {id:'oit-3',ta:'V 76',tb:'V 78'},{id:'oit-4',ta:'V 79',tb:'V 80'},
-    {id:'oit-5',ta:'V 83',tb:'V 84'},{id:'oit-6',ta:'V 81',tb:'V 82'},
-    {id:'oit-7',ta:'V 86',tb:'V 88'},{id:'oit-8',ta:'V 85',tb:'V 87'},
-  ]},
-  {title:'Quartas de Final',icon:'\u{26BD}',matches:[
-    {id:'qua-1',ta:'V oit-2',tb:'V oit-1'},{id:'qua-2',ta:'V oit-5',tb:'V oit-6'},
-    {id:'qua-3',ta:'V oit-3',tb:'V oit-4'},{id:'qua-4',ta:'V oit-7',tb:'V oit-8'},
-  ]},
-  {title:'Semifinal',icon:'\u{26BD}',matches:[
-    {id:'sem-1',ta:'V qua-1',tb:'V qua-2'},{id:'sem-2',ta:'V qua-3',tb:'V qua-4'},
-  ]},
-  {title:'Disputa de 3\u00ba lugar',icon:'\u{1F949}',matches:[
-    {id:'ter-1',ta:'V sem-1',tb:'V sem-2'},
-  ]},
-  {title:'Grande Final',icon:'\u{1F3C6}',matches:[
-    {id:'fin-1',ta:'V sem-1',tb:'V sem-2'},
-  ]},
+// ---- BRACKET RESOLUTION ----
+const matchTeams = {};
+function w(id) {
+  const r = RES[id];
+  if (!r) return null;
+  if (r.a !== r.b) return r.a > r.b ? 'a' : 'b';
+  if (r.pa != null && r.pb != null) return r.pa > r.pb ? 'a' : 'b';
+  return null;
+}
+function winnerName(id, ta, tb) {
+  const wi = w(id);
+  if (wi === 'a') return ta;
+  if (wi === 'b') return tb;
+  return null;
+}
+// R32
+for (const [id, ta, tb] of R32) {
+  matchTeams[String(id)] = { ta, tb, winner: winnerName(String(id), ta, tb) };
+}
+// Oitavas
+const oitMap = [['oit-1',73,75],['oit-2',74,77],['oit-3',76,78],['oit-4',79,80],
+  ['oit-5',83,84],['oit-6',81,82],['oit-7',86,88],['oit-8',85,87]];
+for (const [id, ma, mb] of oitMap) {
+  const ta = matchTeams[String(ma)]?.winner || '?';
+  const tb = matchTeams[String(mb)]?.winner || '?';
+  matchTeams[id] = { ta, tb, winner: winnerName(id, ta, tb) };
+}
+// Quartas
+const quaMap = [['qua-1','oit-2','oit-1'],['qua-2','oit-5','oit-6'],
+  ['qua-3','oit-3','oit-4'],['qua-4','oit-7','oit-8']];
+for (const [id, ma, mb] of quaMap) {
+  const ta = matchTeams[ma]?.winner || '?';
+  const tb = matchTeams[mb]?.winner || '?';
+  matchTeams[id] = { ta, tb, winner: winnerName(id, ta, tb) };
+}
+// Semifinal
+const semMap = [['sem-1','qua-1','qua-2'],['sem-2','qua-3','qua-4']];
+for (const [id, ma, mb] of semMap) {
+  const ta = matchTeams[ma]?.winner || '?';
+  const tb = matchTeams[mb]?.winner || '?';
+  matchTeams[id] = { ta, tb, winner: winnerName(id, ta, tb) };
+}
+// 3o lugar & Final
+for (const [id, ma, mb] of [['ter-1','sem-1','sem-2'],['fin-1','sem-1','sem-2']]) {
+  const ta = matchTeams[ma]?.winner || '?';
+  const tb = matchTeams[mb]?.winner || '?';
+  matchTeams[id] = { ta, tb, winner: winnerName(id, ta, tb) };
+}
+
+// ---- 5. KNOCKOUT TABLE ----
+const fases = [
+  {title:'1/16 de Final',icon:'\u{26BD}',ids:R32.map(m => String(m[0]))},
+  {title:'Oitavas de Final',icon:'\u{26BD}',ids:['oit-1','oit-2','oit-3','oit-4','oit-5','oit-6','oit-7','oit-8']},
+  {title:'Quartas de Final',icon:'\u{26BD}',ids:['qua-1','qua-2','qua-3','qua-4']},
+  {title:'Semifinal',icon:'\u{26BD}',ids:['sem-1','sem-2']},
+  {title:'Disputa de 3\u00ba lugar',icon:'\u{1F949}',ids:['ter-1']},
+  {title:'Grande Final',icon:'\u{1F3C6}',ids:['fin-1']},
 ];
+const fmtId = id => {
+  const n = id.match(/^oit-(\d+)$/); if (n) return 'Oit-J' + String(Number(n[1])).padStart(2,'0');
+  const q = id.match(/^qua-(\d+)$/); if (q) return 'Qua-J' + String(Number(q[1])).padStart(2,'0');
+  const s = id.match(/^sem-(\d+)$/); if (s) return 'Sem-J' + String(Number(s[1])).padStart(2,'0');
+  if (id === 'ter-1') return '3o-J01';
+  if (id === 'fin-1') return 'Fin-J01';
+  return 'J' + id;
+};
 
 html += '<div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:18px">\u{1F3C6}</span><span style="font-size:14px;font-weight:800;color:#FFD700;letter-spacing:1.5px">FASE FINAL</span></div>';
 
-for (const phase of phases) {
+for (const fase of fases) {
   html += '<div style="margin-bottom:16px">';
-  html += '<div style="color:#8B9CC8;font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:6px">'+phase.icon+' '+phase.title+'</div>';
+  html += '<div style="color:#8B9CC8;font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:6px">'+fase.icon+' '+fase.title+'</div>';
   html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
   html += '<thead><tr style="color:#8B9CC8;font-size:10px;border-bottom:1px solid #1E2A45">'
     + '<th style="padding:4px 6px;text-align:left">#</th><th style="padding:4px 6px;text-align:left">Time A</th>'
     + '<th style="padding:4px 6px">Placar</th><th style="padding:4px 6px;text-align:right">Time B</th></tr></thead><tbody>';
-  for (const m of phase.matches) {
-    const r = RES[m.id];
+  for (const mid of fase.ids) {
+    const mt = matchTeams[mid];
+    const r = RES[mid];
     let s = '&ndash;';
     if (r) {
       s = r.a + ' &times; ' + r.b;
       if (r.pa != null && r.pb != null) s += ' <span style="font-size:10px;color:#8B9CC8">(' + r.pa + '-' + r.pb + ' pen)</span>';
     }
-    const fmtId = id => {
-      const n = id.match(/^oit-(\d+)$/); if (n) return 'Oit-J' + String(Number(n[1])).padStart(2,'0');
-      const q = id.match(/^qua-(\d+)$/); if (q) return 'Qua-J' + String(Number(q[1])).padStart(2,'0');
-      const s = id.match(/^sem-(\d+)$/); if (s) return 'Sem-J' + String(Number(s[1])).padStart(2,'0');
-      if (id === 'ter-1') return '3o-J01';
-      if (id === 'fin-1') return 'Fin-J01';
-      return 'J' + id;
-    };
-    html += '<tr><td style="padding:4px 6px;color:#8B9CC8;font-size:10px">'+fmtId(m.id)+'</td>'
-      + '<td style="padding:4px 6px">'+esc(m.ta)+'</td>'
+    const ta = mt ? mt.ta : '?';
+    const tb = mt ? mt.tb : '?';
+    html += '<tr><td style="padding:4px 6px;color:#8B9CC8;font-size:10px">'+fmtId(mid)+'</td>'
+      + '<td style="padding:4px 6px">'+esc(ta)+'</td>'
       + '<td style="padding:4px 6px;text-align:center;font-weight:700">'+s+'</td>'
-      + '<td style="padding:4px 6px;text-align:right">'+esc(m.tb)+'</td></tr>';
+      + '<td style="padding:4px 6px;text-align:right">'+esc(tb)+'</td></tr>';
   }
   html += '</tbody></table></div>';
 }
