@@ -288,17 +288,26 @@ html += '.badge{display:inline-block;font-size:9px;padding:1px 6px;border-radius
 html += '.badge-green{background:rgba(22,163,74,0.2);color:#16a34a;border:1px solid rgba(22,163,74,0.3);}\n';
 html += '.badge-yellow{background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);}\n';
 html += '.badge-red{background:rgba(220,38,38,0.2);color:#dc2626;border:1px solid rgba(220,38,38,0.3);}\n';
-html += '@media print{body{background:#fff !important;color:#000 !important;padding:0.5in;font-size:11pt;}';
+html += '@media print{@page{margin:0.3in;}';
+html += 'body{background:#fff !important;color:#000 !important;padding:0.3in;font-size:10pt;}';
 html += '.card{background:#f5f5f5 !important;border-color:#ccc !important;color:#000 !important;}';
 html += 'details summary{background:#eee !important;border-color:#ccc !important;color:#000 !important;}';
 html += 'details[open] summary{border-bottom:1px solid #ccc !important;}';
 html += 'table td,table th{color:#333 !important;}';
 html += 'img{max-width:100%;}';
 html += '.no-print{display:none !important;}';
+html += 'details{page-break-inside:avoid;break-inside:avoid;}';
+html += 'table{page-break-inside:auto;}';
+html += 'tr{page-break-inside:avoid;break-inside:avoid;}';
+html += '.card{page-break-inside:avoid;break-inside:avoid;}';
 html += '}\n';
 html += '@media(max-width:600px){body{padding:8px;}';
 html += '.group-grid{grid-template-columns:1fr !important;}}\n';
 html += '</style>\n</head>\n<body>\n';
+html += '<div class="no-print" style="text-align:center;padding:12px 16px;max-width:960px;margin:0 auto">\n';
+html += '<button onclick="window.print()" style="background:linear-gradient(135deg,#B8860B,#FFD700);border:none;border-radius:999px;color:#000;font-weight:900;font-size:14px;padding:10px 28px;cursor:pointer;box-shadow:0 0 20px rgba(255,215,0,0.3);letter-spacing:0.5px">\u{1F4C4} Baixar PDF</button>\n';
+html += '<div style="color:#8B9CC8;font-size:10px;margin-top:6px">Clique para gerar PDF — escolha &quot;Salvar como PDF&quot; na impress\u00e3o</div>\n';
+html += '</div>\n';
 
 // ---- 1. HERO ----
 html += '<div class="card gold" style="text-align:center;padding:28px 20px;margin-bottom:20px;background:linear-gradient(135deg,#0A0E1A,#1a1a2e);position:relative;overflow:hidden">';
