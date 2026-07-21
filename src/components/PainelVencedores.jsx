@@ -172,7 +172,7 @@ export function PainelVencedores({ primeiro, segundo, terceiro, totalParticipant
         gap: 8,
       }}>
         <div style={{ color: "#8B9CC8", fontSize: 11 }}>
-          {P1_PCT*100}% — {P2_PCT*100}% — {P3_PCT*100}%
+          {"1\u00BA lugar " + (P1_PCT*100) + "% \u2014 2\u00BA lugar " + (P2_PCT*100) + "% \u2014 3\u00BA lugar " + (P3_PCT*100) + "%"}
         </div>
       </div>
 
