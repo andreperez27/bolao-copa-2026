@@ -1,6 +1,25 @@
 import {
   JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS, JOGOS_SEMI, JOGOS_FINAL, JOGOS_TERCEIRO,
 } from "../services/jogos";
+
+function resolveVPlaceholder(val) {
+  if (!val) return null;
+  const found = /^V (\d+)$/.exec(val);
+  if (found) {
+    const ref = JOGOS_1_16.find(j => j.id === found[1]);
+    if (ref) return ref.time_a + " / " + ref.time_b;
+  }
+  const foundOit = /^V (oit-\d+)$/.exec(val);
+  if (foundOit) {
+    const ref = JOGOS_OITAVAS.find(j => j.id === foundOit[1]);
+    if (ref) {
+      const a = resolveVPlaceholder(ref.time_a) || ref.time_a;
+      const b = resolveVPlaceholder(ref.time_b) || ref.time_b;
+      return a + " / " + b;
+    }
+  }
+  return null;
+}
 import { OITAVAS_MAPPING, QUARTAS_MAPPING, SEMI_MAPPING, FINAL_MAPPING, TERCEIRO_MAPPING } from "./bracketMapping";
 
 const ALL_MAPPINGS = {
@@ -96,8 +115,18 @@ export function resolveInteractiveBracket(resultados, escolhas) {
   function resolvePhase(mappings) {
     return mappings.map(m => {
       const orig = jogosOriginais[m.id];
-      const team1 = winnerMap[m.slot1?.match] || (orig ? orig.time_a : null);
-      const team2 = winnerMap[m.slot2?.match] || (orig ? orig.time_b : null);
+      let team1 = winnerMap[m.slot1?.match];
+      if (!team1 && orig) {
+        const r = resolveVPlaceholder(orig.time_a);
+        if (r) team1 = r;
+        else team1 = orig.time_a;
+      }
+      let team2 = winnerMap[m.slot2?.match];
+      if (!team2 && orig) {
+        const r = resolveVPlaceholder(orig.time_b);
+        if (r) team2 = r;
+        else team2 = orig.time_b;
+      }
       const match = { id: m.id, team1, team2, result: placarReal(m.id), winner: null, travado: travado(m.id) };
       match.winner = vencedorEfetivo(match);
       winnerMap[m.id] = match.winner;

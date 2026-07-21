@@ -3,6 +3,37 @@ import {
   JOGOS_GRUPOS, JOGOS_1_16, JOGOS_OITAVAS, JOGOS_QUARTAS,
   JOGOS_SEMI, JOGOS_FINAL, JOGOS_TERCEIRO, ISO,
 } from "../services/jogos";
+
+function resolveVPlaceholder(val) {
+  if (!val) return null;
+  const found = /^V (\d+)$/.exec(val);
+  if (found) {
+    const ref = JOGOS_1_16.find(j => j.id === found[1]);
+    if (ref) return ref.time_a + " / " + ref.time_b;
+  }
+  const foundOit = /^V (oit-\d+)$/.exec(val);
+  if (foundOit) {
+    const ref = JOGOS_OITAVAS.find(j => j.id === foundOit[1]);
+    if (ref) {
+      const a = resolveVPlaceholder(ref.time_a) || ref.time_a;
+      const b = resolveVPlaceholder(ref.time_b) || ref.time_b;
+      return a + " / " + b;
+    }
+  }
+  for (const prefix of ["qua-", "sem-", "fin-", "ter-"]) {
+    const r = new RegExp("^V (" + prefix + "\\d+)$").exec(val);
+    if (r) {
+      const pool = { "qua-": JOGOS_QUARTAS, "sem-": JOGOS_SEMI, "fin-": JOGOS_FINAL, "ter-": JOGOS_TERCEIRO }[prefix];
+      const ref = pool.find(j => j.id === r[1]);
+      if (ref) {
+        const a = resolveVPlaceholder(ref.time_a) || ref.time_a;
+        const b = resolveVPlaceholder(ref.time_b) || ref.time_b;
+        return a + " / " + b;
+      }
+    }
+  }
+  return null;
+}
 import { getStandingsForAllGroups, allGroupsFinished } from "../utils/standings";
 import { calculateThirdPlaceRanking } from "../utils/thirdPlace";
 import { getKnockoutState } from "../utils/knockout";
@@ -319,8 +350,12 @@ function KoJogo({ match, resultados, isFinal }) {
   const isHolder = n => !n || n.startsWith("1º") || n.startsWith("2º") || n.startsWith("3º") ||
     n.includes("A definir") || n === "3º classificado" || n.startsWith("Vencedor");
 
-  const team1Name = match.team1 && !isHolder(match.team1) ? match.team1 : (jogoData?.time_a || match.placeholder1 || "A definir");
-  const team2Name = match.team2 && !isHolder(match.team2) ? match.team2 : (jogoData?.time_b || match.placeholder2 || "A definir");
+  const team1Name = match.team1 && !isHolder(match.team1)
+    ? match.team1
+    : (/* try to resolve "V 73" etc. */ resolveVPlaceholder(jogoData?.time_a) || jogoData?.time_a || match.placeholder1 || "A definir");
+  const team2Name = match.team2 && !isHolder(match.team2)
+    ? match.team2
+    : (resolveVPlaceholder(jogoData?.time_b) || jogoData?.time_b || match.placeholder2 || "A definir");
 
   const lados = [
     { nome: team1Name, gol: ok ? res.placar_a : null, pen: res?.pen_a, confirmed: match.team1Confirmed },
