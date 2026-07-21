@@ -237,9 +237,9 @@ spainPath.push({phase:'Final',team:'Espanha',desc: 'Espanha 1&times;0 Argentina 
 
 // ---- TOP 3 (sample - user will update) ----
 const TOP3 = [
-  {pos:1,nome:'André Perez',pts:320,premio:'R$ 750,00'},
-  {pos:2,nome:'João Silva',pts:295,premio:'R$ 450,00'},
-  {pos:3,nome:'Maria Santos',pts:278,premio:'R$ 300,00'},
+  {pos:1,nome:'Perez',pts:223,premio:'R$ 30,00'},
+  {pos:2,nome:'Andre',pts:138,premio:'R$ 18,00'},
+  {pos:3,nome:'Helder Rodrigues',pts:96,premio:'R$ 12,00'},
 ];
 
 function groupTable(g) {
