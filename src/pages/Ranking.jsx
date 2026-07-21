@@ -17,7 +17,6 @@ export default function Ranking({
   artilheiroRealSelecao,
   isAdmin,
   config,
-  ultimaAtualizacao,
   onVoltar,
   onValidarCartela,
   onResultadosChange,
@@ -370,7 +369,6 @@ export default function Ranking({
           artilheiroRealNome={artilheiroRealNome}
           artilheiroRealSelecao={artilheiroRealSelecao}
           isAdmin={isAdmin}
-          ultimaAtualizacao={ultimaAtualizacao}
           onValidarCartela={onValidarCartela}
           onResultadosChange={onResultadosChange}
         />

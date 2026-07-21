@@ -23,7 +23,7 @@ export default function App() {
   const location = useLocation();
   const { user, jogador, isAdmin, signOut, refreshJogador, refreshUser } = useAuth();
   const { cartelas, refresh: refreshCartelas, salvar: salvarCartelaHook, deletar, validar } = useCartelas();
-  const { resultados, campeoReal, viceCampeaoReal, artilheiroRealNome, artilheiroRealSelecao, config, updateResultados, loadData, ultimaAtualizacao } = useRanking();
+  const { resultados, campeoReal, viceCampeaoReal, artilheiroRealNome, artilheiroRealSelecao, config, updateResultados } = useRanking();
 
   const [cartelaEditando, setCartelaEditando] = useState(null);
   const [cartelaPrint, setCartelaPrint] = useState(null);
@@ -238,7 +238,6 @@ export default function App() {
               artilheiroRealSelecao={artilheiroRealSelecao}
               isAdmin={isAdmin}
               config={config}
-              ultimaAtualizacao={ultimaAtualizacao}
               onVoltar={() => navigate(user ? "/minhas-cartelas" : "/login")}
               onValidarCartela={handleValidarCartela}
               onResultadosChange={handleResultadosChange}

@@ -52,23 +52,21 @@ export async function salvarAdminData(resultados, campeoReal, viceCampeaoReal, a
 
 export async function getConfig() {
   try {
-    const res = await supabaseFetch("/rest/v1/config?select=valor_aposta,api_url,admin_password,bonus_geral&id=eq.1");
+    const res = await supabaseFetch("/rest/v1/config?select=valor_aposta,admin_password,bonus_geral&id=eq.1");
     const data = await res.json();
     return {
       valor_aposta: data?.[0]?.valor_aposta || 20,
-      api_url: data?.[0]?.api_url || "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json",
       admin_password: data?.[0]?.admin_password || "",
       bonus_geral: data?.[0]?.bonus_geral || 0,
     };
   } catch {
-    return { valor_aposta: 20, api_url: "", bonus_geral: 0 };
+    return { valor_aposta: 20, bonus_geral: 0 };
   }
 }
 
-export async function salvarConfig({ valor_aposta, api_url, admin_password, bonus_geral }) {
+export async function salvarConfig({ valor_aposta, admin_password, bonus_geral }) {
   const body = {
     valor_aposta: Number(valor_aposta),
-    api_url,
   };
   if (admin_password !== undefined && admin_password !== "") {
     body.admin_password = admin_password;

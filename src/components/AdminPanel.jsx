@@ -8,7 +8,6 @@ import { salvarAdminData, salvarConfig, getConfig } from "../services/admin";
 import { listJogadores, deletarJogador } from "../services/jogadores";
 import { listarCartelasExcluidas, restaurarCartela, excluirCartelaDefinitivo } from "../services/cartelas";
 import { useAuth } from "../contexts/AuthContext";
-import { parseResultadosDeAPI, fetchResultadosDeURL } from "../utils/parseResultadosAPI";
 
 export function AdminPanel({
   cartelas,
@@ -19,7 +18,6 @@ export function AdminPanel({
   artilheiroRealSelecao,
   onValidarCartela,
   onResultadosChange,
-  ultimaAtualizacao,
 }) {
   const { isAdmin } = useAuth();
   const [abaAdmin, setAbaAdmin] = useState("validar");
@@ -32,9 +30,6 @@ export function AdminPanel({
   const [participantes, setParticipantes] = useState([]);
   const [carregandoPart, setCarregandoPart] = useState(false);
   const [valorAposta, setValorAposta] = useState(20);
-  const [apiUrl, setApiUrl] = useState("");
-  const [buscando, setBuscando] = useState(false);
-  const [msgBusca, setMsgBusca] = useState("");
   const [adminSenha, setAdminSenha] = useState("");
   const [bonusGeral, setBonusGeral] = useState(0);
   const [cartelasExcluidas, setCartelasExcluidas] = useState([]);
@@ -48,7 +43,6 @@ export function AdminPanel({
   useEffect(() => {
     getConfig().then((cfg) => {
       setValorAposta(cfg.valor_aposta);
-      setApiUrl(cfg.api_url || "");
       setBonusGeral(cfg.bonus_geral || 0);
     }).catch(() => {});
   }, []);
@@ -110,43 +104,9 @@ export function AdminPanel({
     [resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit, onResultadosChange]
   );
 
-  const handleBuscarResultados = useCallback(async () => {
-    const url = apiUrl || "https://raw.githubusercontent.com/openfootball/world-cup.json/master/2026/worldcup.json";
-    setBuscando(true);
-    setMsgBusca("Buscando resultados...");
-    try {
-      const matches = await fetchResultadosDeURL(url);
-      const novos = parseResultadosDeAPI(matches);
-      const count = Object.keys(novos).length;
-      if (count > 0) {
-        const mergeados = { ...resultadosEdit };
-        for (const id of Object.keys(novos)) {
-          const velho = mergeados[id] || {};
-          const novo = novos[id];
-          mergeados[id] = { ...velho };
-          if (novo.placar_a !== undefined) mergeados[id].placar_a = novo.placar_a;
-          if (novo.placar_b !== undefined) mergeados[id].placar_b = novo.placar_b;
-          if (novo.pro_a !== undefined) mergeados[id].pro_a = novo.pro_a;
-          if (novo.pro_b !== undefined) mergeados[id].pro_b = novo.pro_b;
-          if (novo.pen_a !== undefined && velho.pen_a === undefined && velho.pen_b === undefined) mergeados[id].pen_a = novo.pen_a;
-          if (novo.pen_b !== undefined && velho.pen_a === undefined && velho.pen_b === undefined) mergeados[id].pen_b = novo.pen_b;
-        }
-        setResultadosEdit(mergeados);
-        onResultadosChange(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
-        await salvarAdminData(mergeados, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit);
-        setMsgBusca(`${count} resultado(s) atualizado(s)!`);
-      } else {
-        setMsgBusca("Nenhum resultado novo encontrado. Verifique se a API retorna jogos finalizados.");
-      }
-    } catch (e) {
-      setMsgBusca("Erro: " + e.message + ". Tente inserir manualmente.");
-    }
-    setBuscando(false);
-  }, [apiUrl, resultadosEdit, campeoRealEdit, viceCampeaoRealEdit, artilheiroRealNomeEdit, artilheiroRealSelecaoEdit, onResultadosChange]);
-
   const handleSalvarConfig = async () => {
     try {
-      await salvarConfig({ valor_aposta: Number(valorAposta), api_url: apiUrl, admin_password: adminSenha || undefined, bonus_geral: Number(bonusGeral) });
+      await salvarConfig({ valor_aposta: Number(valorAposta), admin_password: adminSenha || undefined, bonus_geral: Number(bonusGeral) });
       setAdminSenha("");
       alert("Configuração salva com sucesso!");
     } catch (e) {
@@ -267,38 +227,6 @@ export function AdminPanel({
           <div style={{ color: "#C8102E", fontWeight: 800, fontSize: 14, marginBottom: 12 }}>
             Resultados dos Jogos
           </div>
-          <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
-            <input
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              placeholder="https://wheniskickoff.com/data/v1/matches.json"
-              style={{
-                flex: 1,
-                background: "#1a2234",
-                border: "1px solid #1E2A45",
-                borderRadius: 8,
-                color: "#F0F4FF",
-                padding: "8px 12px",
-                fontSize: 13,
-              }}
-            />
-            <Btn
-              onClick={handleBuscarResultados}
-              cor="#0033A0"
-              disabled={buscando}
-              style={{ padding: "8px 14px", fontSize: 12 }}
-            >
-              {buscando ? "\u23F3" : "\uD83D\uDD0D Buscar"}
-            </Btn>
-          </div>
-          {msgBusca && (
-            <div style={{ color: "#8B9CC8", fontSize: 12, marginBottom: 10 }}>{msgBusca}</div>
-          )}
-          {ultimaAtualizacao && (
-            <div style={{ color: "#8B9CC8", fontSize: 11, marginBottom: 8 }}>
-              Última atualização automática: {new Date(ultimaAtualizacao).toLocaleTimeString("pt-BR")}
-            </div>
-          )}
           <div style={{ marginBottom: 12 }}>
             <div style={{ color: "#FFD700", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Campeão real</div>
             <select
@@ -565,25 +493,6 @@ export function AdminPanel({
               value={adminSenha}
               onChange={(e) => setAdminSenha(e.target.value)}
               placeholder="Nova senha do admin (deixe vazio para manter)"
-              style={{
-                width: "100%",
-                background: "#1a2234",
-                border: "2px solid #1E2A45",
-                borderRadius: 8,
-                color: "#F0F4FF",
-                padding: "10px 12px",
-                fontSize: 14,
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ color: "#8B9CC8", fontSize: 13, marginBottom: 6 }}>
-              URL da API de Resultados
-            </div>
-            <input
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              placeholder="https://wheniskickoff.com/data/v1/matches.json"
               style={{
                 width: "100%",
                 background: "#1a2234",
