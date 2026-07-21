@@ -52,19 +52,21 @@ export async function salvarAdminData(resultados, campeoReal, viceCampeaoReal, a
 
 export async function getConfig() {
   try {
-    const res = await supabaseFetch("/rest/v1/config?select=valor_aposta,admin_password,bonus_geral&id=eq.1");
+    const res = await supabaseFetch("/rest/v1/config?select=valor_aposta,admin_password,bonus_geral,bolao_encerrado,campeao_real&id=eq.1");
     const data = await res.json();
     return {
       valor_aposta: data?.[0]?.valor_aposta || 20,
       admin_password: data?.[0]?.admin_password || "",
       bonus_geral: data?.[0]?.bonus_geral || 0,
+      bolao_encerrado: data?.[0]?.bolao_encerrado || false,
+      campeao_real: data?.[0]?.campeao_real || "",
     };
   } catch {
-    return { valor_aposta: 20, bonus_geral: 0 };
+    return { valor_aposta: 20, bonus_geral: 0, bolao_encerrado: false, campeao_real: "" };
   }
 }
 
-export async function salvarConfig({ valor_aposta, admin_password, bonus_geral }) {
+export async function salvarConfig({ valor_aposta, admin_password, bonus_geral, bolao_encerrado, campeao_real }) {
   const body = {
     valor_aposta: Number(valor_aposta),
   };
@@ -73,6 +75,12 @@ export async function salvarConfig({ valor_aposta, admin_password, bonus_geral }
   }
   if (bonus_geral !== undefined) {
     body.bonus_geral = Number(bonus_geral) || 0;
+  }
+  if (bolao_encerrado !== undefined) {
+    body.bolao_encerrado = bolao_encerrado;
+  }
+  if (campeao_real !== undefined) {
+    body.campeao_real = campeao_real;
   }
   const res = await supabaseFetch("/rest/v1/config?id=eq.1", {
     method: "PATCH",

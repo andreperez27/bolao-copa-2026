@@ -3,6 +3,7 @@ import { Card } from "../components/Card";
 import { Btn } from "../components/Btn";
 import { StatusBadge } from "../components/StatusBadge";
 import { PainelFinanceiro } from "../components/PainelFinanceiro";
+import { PainelVencedores } from "../components/PainelVencedores";
 import { AdminPanel } from "../components/AdminPanel";
 import { LegendaDesempate } from "../components/LegendaDesempate";
 import { calcularPontos, pontosCampeaoPorFase, pontosViceCampeaoPorFase, pontosArtilheiro, bonusCombo } from "../utils/pontuacao";
@@ -195,6 +196,19 @@ export default function Ranking({
           totalParticipantes={new Set(cartelas.filter((c) => !NOMES_IA.includes(c.participante)).map((c) => c.participante)).size}
           valorAposta={config?.valor_aposta || 20}
         />
+
+        {config?.bolao_encerrado && ranking.length > 0 && (
+          <PainelVencedores
+            primeiro={primeiro}
+            segundo={segundo}
+            terceiro={terceiro}
+            totalParticipantes={new Set(cartelas.filter((c) => !NOMES_IA.includes(c.participante)).map((c) => c.participante)).size}
+            valorAposta={config?.valor_aposta || 20}
+            campeoReal={campeoReal}
+            viceCampeaoReal={viceCampeaoReal}
+            resultados={resultados}
+          />
+        )}
 
         {ranking.length > 0 && (
           <div

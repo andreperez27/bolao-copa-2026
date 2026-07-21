@@ -32,6 +32,8 @@ export function AdminPanel({
   const [valorAposta, setValorAposta] = useState(20);
   const [adminSenha, setAdminSenha] = useState("");
   const [bonusGeral, setBonusGeral] = useState(0);
+  const [bolaoEncerrado, setBolaoEncerrado] = useState(false);
+  const [configCampeaoReal, setConfigCampeaoReal] = useState("");
   const [cartelasExcluidas, setCartelasExcluidas] = useState([]);
   const [carregandoLixeira, setCarregandoLixeira] = useState(false);
 
@@ -44,6 +46,8 @@ export function AdminPanel({
     getConfig().then((cfg) => {
       setValorAposta(cfg.valor_aposta);
       setBonusGeral(cfg.bonus_geral || 0);
+      setBolaoEncerrado(cfg.bolao_encerrado || false);
+      setConfigCampeaoReal(cfg.campeao_real || "");
     }).catch(() => {});
   }, []);
 
@@ -106,7 +110,7 @@ export function AdminPanel({
 
   const handleSalvarConfig = async () => {
     try {
-      await salvarConfig({ valor_aposta: Number(valorAposta), admin_password: adminSenha || undefined, bonus_geral: Number(bonusGeral) });
+      await salvarConfig({ valor_aposta: Number(valorAposta), admin_password: adminSenha || undefined, bonus_geral: Number(bonusGeral), bolao_encerrado: bolaoEncerrado, campeao_real: configCampeaoReal });
       setAdminSenha("");
       alert("Configuração salva com sucesso!");
     } catch (e) {
@@ -526,6 +530,56 @@ export function AdminPanel({
               }}
             />
           </div>
+
+          <div style={{
+            borderTop: "2px solid #FFD70044",
+            paddingTop: 16,
+            marginBottom: 14,
+          }}>
+            <div style={{ color: "#FFD700", fontWeight: 800, fontSize: 14, marginBottom: 12 }}>
+              {"\uD83C\uDFC6"} Encerrar Bolão
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={bolaoEncerrado}
+                  onChange={(e) => setBolaoEncerrado(e.target.checked)}
+                  style={{ width: 20, height: 20, accentColor: "#FFD700", cursor: "pointer" }}
+                />
+                <span style={{ color: "#F0F4FF", fontWeight: 600, fontSize: 14 }}>
+                  Bolão encerrado — exibir painel de vencedores no ranking
+                </span>
+              </label>
+            </div>
+            {bolaoEncerrado && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ color: "#8B9CC8", fontSize: 12, marginBottom: 4 }}>
+                  Campeão real (confirmar)
+                </div>
+                <select
+                  value={configCampeaoReal}
+                  onChange={(e) => setConfigCampeaoReal(e.target.value)}
+                  style={{
+                    width: "100%",
+                    background: "#1a2234",
+                    border: "2px solid #FFD700",
+                    borderRadius: 8,
+                    color: "#FFD700",
+                    padding: "8px 12px",
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}
+                >
+                  <option value="">Selecione...</option>
+                  {TODOS_TIMES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
           <Btn onClick={handleSalvarConfig} cor="#0033A0" style={{ width: "100%" }}>
             Salvar Configuração
           </Btn>

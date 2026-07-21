@@ -7,7 +7,7 @@ export function useRanking() {
   const [viceCampeaoReal, setViceCampeaoReal] = useState("");
   const [artilheiroRealNome, setArtilheiroRealNome] = useState("");
   const [artilheiroRealSelecao, setArtilheiroRealSelecao] = useState("");
-  const [config, setConfigLocal] = useState({ valor_aposta: 20, bonus_geral: 0 });
+  const [config, setConfigLocal] = useState({ valor_aposta: 20, bonus_geral: 0, bolao_encerrado: false, campeao_real: "" });
 
   useEffect(() => {
     let ativo = true;
