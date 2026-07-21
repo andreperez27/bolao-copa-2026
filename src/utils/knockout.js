@@ -79,8 +79,8 @@ export function getKnockoutState(resultados) {
   const resolvedR32 = {};
   for (const m of R32_MAPPING) {
     const orig = jogosOriginais1_16[m.id];
-    const team1 = resolveSlot(m.slot1) || (orig?.time_a || null);
-    const team2 = resolveSlot(m.slot2) || (orig?.time_b || null);
+    const team1 = orig?.time_a || resolveSlot(m.slot1) || null;
+    const team2 = orig?.time_b || resolveSlot(m.slot2) || null;
     const res = getMatchResult(m.id, resultados);
     resolvedR32[m.id] = {
       id: m.id,
